@@ -1,0 +1,47 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+.ruff_cache
+
+# Data files
+data/
+datasets/
+*.csv
+*.tsv
+*.parquet
+*.feather
+
+# Model files
+models/
+checkpoints/
+*.pt
+*.pth
+*.h5
+*.joblib
+*.pkl
+*.onnx
+
+# Logs & outputs
+logs/
+outputs/
+results/
+wandb/
+mlruns/
+
+# System files
+.DS_Store
+*.swp
+.vscode/
+.idea/
+
+# Environment files
+.env
+/data
+/models

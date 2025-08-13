@@ -1,0 +1,43 @@
+default_language_version:
+  python: python3.12
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.1.0
+    hooks:
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: check-yaml
+      - id: check-docstring-first
+      - id: check-executables-have-shebangs
+      - id: check-case-conflict
+      - id: check-added-large-files
+        exclude: ^(.*\/dummy.*|.*\.json)$
+        args: ["--maxkb=750", "--enforce-all"]
+      - id: detect-private-key
+      - id: check-merge-conflict
+
+# Security checks
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.22.1
+    hooks:
+      - id: gitleaks
+        name: "🔒 security · Detect hardcoded secrets"
+
+  # Python code formatting and linting
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.11.13
+    hooks:
+      - id: ruff-format
+        name: "🐍 python · Format with Ruff"
+      - id: ruff
+        name: "🐍 python · Lint with Ruff"
+        args: [--fix]
+
+  # Commit message validation
+  - repo: https://github.com/commitizen-tools/commitizen
+    rev: v4.8.3
+    hooks:
+      - id: commitizen
+        name: "🌳 git · Validate commit message"
+        stages: [commit-msg]
