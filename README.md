@@ -4,7 +4,7 @@
 
 **1. Clone the repository**
 ```bash
-git clone git@github.com:vithushanms/ideaboxai-vertical-ml-service.git
+git clone git@github.com:ideaboxai/ideaboxai-vertical-ml-service.git
 cd ideaboxai-vertical-ml-service
 ```
 

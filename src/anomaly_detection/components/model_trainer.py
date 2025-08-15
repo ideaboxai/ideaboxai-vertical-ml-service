@@ -2,13 +2,16 @@ import joblib
 import pandas as pd
 from dataclasses import dataclass
 from src.anomaly_detection.factory import get_detector
+from typing import Optional
+
+STAT_DETECTORS = {"iqr", "z_score", "mad"}
 
 
 @dataclass
 class ModelTrainerConfig:
-    model_save_path: str
     model_name: str
     params: dict
+    model_save_path: Optional[str] = None
 
 
 class ModelTrainer:
@@ -16,13 +19,17 @@ class ModelTrainer:
         self.config = config
 
     def train(self, data: pd.DataFrame):
-        # 1. Get the right detector strategy from the factory
-        model_params = self.config.params.get(self.config.model_name, {})
+        model_params = (
+            self.config.params if isinstance(self.config.params, dict) else {}
+        )
         detector = get_detector(model_name=self.config.model_name, params=model_params)
 
-        # 2. Fit the detector
-        detector.fit(data)
-
-        # 3. Save the entire fitted detector object
-        print(f"Saving detector to {self.config.model_save_path}")
-        joblib.dump(detector, self.config.model_save_path)
+        if self.config.model_name in STAT_DETECTORS:
+            # Statistical detectors: fit returns thresholds
+            thresholds = detector.fit(data)
+            return thresholds
+        else:
+            # ML detectors: fit returns fitted model
+            detector.fit(data)
+            print(f"Saving detector to {self.config.model_save_path}")
+            joblib.dump(detector, self.config.model_save_path)

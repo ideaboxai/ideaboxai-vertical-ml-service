@@ -6,8 +6,11 @@ dependencies = [
     "matplotlib>=3.10.5",
     "numpy>=2.3.2",
     "pandas>=2.3.1",
+    "pymysql>=1.1.1",
+    "python-dotenv>=1.1.1",
     "scikit-learn>=1.7.1",
     "scipy>=1.16.1",
+    "seaborn>=0.13.2",
     "sqlalchemy>=2.0.43",
 ]
 
