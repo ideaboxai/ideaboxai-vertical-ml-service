@@ -1,5 +1,5 @@
 from .base_repo import BaseRepository
-from ..db_conn import get_sandhya_db_engine
+from ...db_conn import get_sandhya_db_engine
 from typing import Optional, List
 
 import pandas as pd
@@ -11,7 +11,7 @@ class CookingRepository(BaseRepository):
     """
 
     db_name = "erpx_dev_production"
-    available_tables = ["pp_cooking", "pp_cooking_lot", "pp_cooking_reading"]
+    available_tables = ["pp_cooking", "pp_cooking_lot", "pp_cooking_readings"]
 
     def __init__(self):
         self.engine = get_sandhya_db_engine()

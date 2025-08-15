@@ -10,7 +10,7 @@ class IQRDetector(BaseAnomalyDetector):
     outside a specified multiplier of the IQR.
     """
 
-    def fit(self, data: pd.Series):
+    def fit(self, data: pd.DataFrame):
         data = data.dropna()
 
         q1 = data.quantile(0.25)
@@ -76,9 +76,15 @@ class MADDetector(BaseAnomalyDetector):
 
     def fit(self, data: pd.DataFrame):
         data = data.dropna()
-        column = data.columns[0]
-        median = data[column].median()
-        mad = np.median(np.abs(data[column] - median))
+        # Handle both DataFrame and Series input
+        if isinstance(data, pd.DataFrame):
+            column = data.columns[0]
+            values = data[column]
+        else:
+            values = data
+
+        median = values.median()
+        mad = np.median(np.abs(values - median))
         multiplier = self.params.get("mad_multiplier", 3.5)
 
         lower_bound = median - multiplier * mad

@@ -1,5 +1,5 @@
 from .base_repo import BaseRepository
-from ..db_conn import get_sandhya_db_engine
+from ...db_conn import get_sandhya_db_engine
 from typing import Optional, List
 
 import pandas as pd
