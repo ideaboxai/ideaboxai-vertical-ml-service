@@ -68,6 +68,9 @@ def run_feature_wise_anomaly_detection():
 
         statistical_thresholds = []
 
+        total_tables = 0
+        total_features = 0
+
         # Using the loaded configuration data, fetch the data from the repositories
         # Iterating through each table
         for item in config_data:
@@ -139,15 +142,29 @@ def run_feature_wise_anomaly_detection():
 
                 # Append the feature statistics to the table statistics
                 table_stats["features"].append(feature_stats)
+                total_features += 1
 
             # Append the table statistics to the overall statistical thresholds
             statistical_thresholds.append(table_stats)
+            total_tables += 1
+
+        # Add metadata
+        output = {
+            "metadata": {
+                "generated_at": __import__("datetime").datetime.now().isoformat(),
+                "description": "Feature statistics for anomaly detection",
+                "version": "1.0.0",
+                "total_tables": total_tables,
+                "total_features": total_features,
+            },
+            "data": statistical_thresholds,
+        }
 
         # Save the statistical thresholds to a JSON file
         output_path = "models/sandhya_aqua_erp/statistical_thresholds.json"
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         with open(output_path, "w") as outfile:
-            json.dump(statistical_thresholds, outfile, indent=4)
+            json.dump(output, outfile, indent=4)
 
 
 run_feature_wise_anomaly_detection()

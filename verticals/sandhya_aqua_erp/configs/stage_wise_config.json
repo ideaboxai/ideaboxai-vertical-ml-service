@@ -1,0 +1,18 @@
+[
+    {
+        "repository_class": "GradingRepository",
+        "features": ["crate_weight", "shrimp_count_per_pound", "weight_in_kg", "crate_count"],
+        "strategies": [
+            {
+                "name": "isolation_forest",
+                "params": {
+                    "n_estimators": 100,
+                    "max_samples": "auto",
+                    "contamination": 0.01,
+                    "random_state": 42
+                },
+                "model_save_path": "models/sandhya_aqua_erp/grading_isolation_forest.pkl"
+            }
+        ]
+    }
+]
