@@ -47,9 +47,13 @@ class ZScoreDetector(BaseAnomalyDetector):
 
     def fit(self, data: pd.DataFrame):
         data = data.dropna()
-        column = data.columns[0]
-        mean_ = data[column].mean()
-        std_ = data[column].std()
+        if isinstance(data, pd.DataFrame):
+            column = data.columns[0]
+            values = data[column]
+        else:
+            values = data
+        mean_ = values.mean()
+        std_ = values.std()
         z_max_threshold = self.params.get("z_max_threshold", 3.0)
 
         print(

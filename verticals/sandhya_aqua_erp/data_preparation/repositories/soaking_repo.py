@@ -29,11 +29,13 @@ class SoakingRepository(BaseRepository):
                 f"Table {table_name} is not available in the SoakingRepository."
             )
 
-        query = f"SELECT * FROM {self.db_name}.{table_name}"
+        query = (
+            f"SELECT * FROM {self.db_name}.{table_name} WHERE created_at > '2025-06-01'"
+        )
 
         if column_names:
             columns = ", ".join(column_names)
-            query = f"SELECT {columns} FROM {self.db_name}.{table_name}"
+            query = f"SELECT {columns} FROM {self.db_name}.{table_name} WHERE created_at > '2025-06-01'"
 
         df = pd.read_sql(query, self.engine)
         return df

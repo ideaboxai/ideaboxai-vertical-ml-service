@@ -17,7 +17,7 @@
                     {
                         "name": "mad",
                         "params": {
-                            "mad_multiplier": 1.5,
+                            "mad_multiplier": 3.5,
                             "is_non_negative_feature": true
                         }
                     }
@@ -36,7 +36,7 @@
                     {
                         "name": "mad",
                         "params": {
-                            "mad_multiplier": 1.5,
+                            "mad_multiplier": 3.5,
                             "is_non_negative_feature": true
                         }
                     }
@@ -55,7 +55,7 @@
                     {
                         "name": "mad",
                         "params": {
-                            "mad_multiplier": 1.5,
+                            "mad_multiplier": 3.5,
                             "is_non_negative_feature": true
                         }
                     }
@@ -74,7 +74,7 @@
                     {
                         "name": "mad",
                         "params": {
-                            "mad_multiplier": 1.5,
+                            "mad_multiplier": 3.5,
                             "is_non_negative_feature": true
                         }
                     }
@@ -93,7 +93,7 @@
                     {
                         "name": "mad",
                         "params": {
-                            "mad_multiplier": 1.5,
+                            "mad_multiplier": 3.5,
                             "is_non_negative_feature": true
                         }
                     }
@@ -112,7 +112,7 @@
                     {
                         "name": "mad",
                         "params": {
-                            "mad_multiplier": 1.5,
+                            "mad_multiplier": 3.5,
                             "is_non_negative_feature": true
                         }
                     }
@@ -131,7 +131,7 @@
                     {
                         "name": "mad",
                         "params": {
-                            "mad_multiplier": 1.5,
+                            "mad_multiplier": 3.5,
                             "is_non_negative_feature": true
                         }
                     }
@@ -157,7 +157,7 @@
                     {
                         "name": "mad",
                         "params": {
-                            "mad_multiplier": 1.5,
+                            "mad_multiplier": 3.5,
                             "is_non_negative_feature": true
                         }
                     }
@@ -183,7 +183,7 @@
                     {
                         "name": "mad",
                         "params": {
-                            "mad_multiplier": 1.5,
+                            "mad_multiplier": 3.5,
                             "is_non_negative_feature": true
                         }
                     }
@@ -202,7 +202,7 @@
                     {
                         "name": "mad",
                         "params": {
-                            "mad_multiplier": 1.5,
+                            "mad_multiplier": 3.5,
                             "is_non_negative_feature": true
                         }
                     }
@@ -228,7 +228,7 @@
                     {
                         "name": "mad",
                         "params": {
-                            "mad_multiplier": 1.5,
+                            "mad_multiplier": 3.5,
                             "is_non_negative_feature": true
                         }
                     }
@@ -247,7 +247,7 @@
                     {
                         "name": "mad",
                         "params": {
-                            "mad_multiplier": 1.5,
+                            "mad_multiplier": 3.5,
                             "is_non_negative_feature": true
                         }
                     }
@@ -264,9 +264,9 @@
                         }
                     },
                     {
-                        "name": "mad",
+                        "name": "z_score",
                         "params": {
-                            "mad_multiplier": 1.5,
+                            "z_max_threshold": 3.0,
                             "is_non_negative_feature": true
                         }
                     }
@@ -292,7 +292,7 @@
                     {
                         "name": "mad",
                         "params": {
-                            "mad_multiplier": 1.5,
+                            "mad_multiplier": 3.5,
                             "is_non_negative_feature": true
                         }
                     }
@@ -318,7 +318,7 @@
                     {
                         "name": "mad",
                         "params": {
-                            "mad_multiplier": 1.5,
+                            "mad_multiplier": 3.5,
                             "is_non_negative_feature": true
                         }
                     }
@@ -337,7 +337,7 @@
                     {
                         "name": "mad",
                         "params": {
-                            "mad_multiplier": 1.5,
+                            "mad_multiplier": 3.5,
                             "is_non_negative_feature": true
                         }
                     }
@@ -356,7 +356,26 @@
                     {
                         "name": "mad",
                         "params": {
-                            "mad_multiplier": 1.5,
+                            "mad_multiplier": 3.5,
+                            "is_non_negative_feature": true
+                        }
+                    }
+                ]
+            },
+            {
+                "name": "actual_soaking_time_in_minutes",
+                "strategies": [
+                    {
+                        "name": "iqr",
+                        "params": {
+                            "iqr_multiplier": 1.5,
+                            "is_non_negative_feature": true
+                        }
+                    },
+                    {
+                        "name": "mad",
+                        "params": {
+                            "mad_multiplier": 3.5,
                             "is_non_negative_feature": true
                         }
                     }
@@ -382,7 +401,7 @@
                     {
                         "name": "mad",
                         "params": {
-                            "mad_multiplier": 1.5,
+                            "mad_multiplier": 3.5,
                             "is_non_negative_feature": true
                         }
                     }
@@ -399,9 +418,9 @@
                         }
                     },
                     {
-                        "name": "mad",
+                        "name": "z_score",
                         "params": {
-                            "mad_multiplier": 1.5,
+                            "z_max_threshold": 3.0,
                             "is_non_negative_feature": true
                         }
                     }
@@ -427,7 +446,7 @@
                     {
                         "name": "mad",
                         "params": {
-                            "mad_multiplier": 1.5,
+                            "mad_multiplier": 3.5,
                             "is_non_negative_feature": true
                         }
                     }
@@ -453,7 +472,7 @@
                     {
                         "name": "mad",
                         "params": {
-                            "mad_multiplier": 1.5,
+                            "mad_multiplier": 3.5,
                             "is_non_negative_feature": true
                         }
                     }
@@ -477,9 +496,9 @@
                         }
                     },
                     {
-                        "name": "mad",
+                        "name": "z_score",
                         "params": {
-                            "mad_multiplier": 1.5,
+                            "z_max_threshold": 3.0,
                             "is_non_negative_feature": true
                         }
                     }
@@ -496,9 +515,9 @@
                         }
                     },
                     {
-                        "name": "mad",
+                        "name": "z_score",
                         "params": {
-                            "mad_multiplier": 1.5,
+                            "z_max_threshold": 3.0,
                             "is_non_negative_feature": true
                         }
                     }
@@ -524,7 +543,7 @@
                     {
                         "name": "mad",
                         "params": {
-                            "mad_multiplier": 1.5,
+                            "mad_multiplier": 3.5,
                             "is_non_negative_feature": true
                         }
                     }
@@ -543,7 +562,7 @@
                     {
                         "name": "mad",
                         "params": {
-                            "mad_multiplier": 1.5,
+                            "mad_multiplier": 3.5,
                             "is_non_negative_feature": true
                         }
                     }
@@ -562,7 +581,7 @@
                     {
                         "name": "mad",
                         "params": {
-                            "mad_multiplier": 1.5,
+                            "mad_multiplier": 3.5,
                             "is_non_negative_feature": true
                         }
                     }
@@ -588,7 +607,7 @@
                     {
                         "name": "mad",
                         "params": {
-                            "mad_multiplier": 1.5,
+                            "mad_multiplier": 3.5,
                             "is_non_negative_feature": true
                         }
                     }
@@ -607,7 +626,7 @@
                     {
                         "name": "mad",
                         "params": {
-                            "mad_multiplier": 1.5,
+                            "mad_multiplier": 3.5,
                             "is_non_negative_feature": true
                         }
                     }
@@ -626,7 +645,7 @@
                     {
                         "name": "mad",
                         "params": {
-                            "mad_multiplier": 1.5,
+                            "mad_multiplier": 3.5,
                             "is_non_negative_feature": true
                         }
                     }
@@ -645,7 +664,7 @@
                     {
                         "name": "mad",
                         "params": {
-                            "mad_multiplier": 1.5,
+                            "mad_multiplier": 3.5,
                             "is_non_negative_feature": true
                         }
                     }
@@ -664,7 +683,7 @@
                     {
                         "name": "mad",
                         "params": {
-                            "mad_multiplier": 1.5,
+                            "mad_multiplier": 3.5,
                             "is_non_negative_feature": true
                         }
                     }
@@ -683,7 +702,7 @@
                     {
                         "name": "mad",
                         "params": {
-                            "mad_multiplier": 1.5,
+                            "mad_multiplier": 3.5,
                             "is_non_negative_feature": true
                         }
                     }
@@ -709,7 +728,7 @@
                     {
                         "name": "mad",
                         "params": {
-                            "mad_multiplier": 1.5,
+                            "mad_multiplier": 3.5,
                             "is_non_negative_feature": true
                         }
                     }
@@ -728,7 +747,7 @@
                     {
                         "name": "mad",
                         "params": {
-                            "mad_multiplier": 1.5,
+                            "mad_multiplier": 3.5,
                             "is_non_negative_feature": true
                         }
                     }
@@ -754,7 +773,7 @@
                     {
                         "name": "mad",
                         "params": {
-                            "mad_multiplier": 1.5,
+                            "mad_multiplier": 3.5,
                             "is_non_negative_feature": true
                         }
                     }
@@ -773,7 +792,7 @@
                     {
                         "name": "mad",
                         "params": {
-                            "mad_multiplier": 1.5,
+                            "mad_multiplier": 3.5,
                             "is_non_negative_feature": true
                         }
                     }
@@ -792,7 +811,7 @@
                     {
                         "name": "mad",
                         "params": {
-                            "mad_multiplier": 1.5,
+                            "mad_multiplier": 3.5,
                             "is_non_negative_feature": true
                         }
                     }
@@ -811,7 +830,7 @@
                     {
                         "name": "mad",
                         "params": {
-                            "mad_multiplier": 1.5,
+                            "mad_multiplier": 3.5,
                             "is_non_negative_feature": true
                         }
                     }

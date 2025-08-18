@@ -10,7 +10,7 @@ import sys
 import os
 
 sys.path.append(
-    os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../../.."))
+    os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../../../../"))
 )
 
 from src.anomaly_detection.components.model_trainer import (
@@ -32,6 +32,14 @@ from verticals.sandhya_aqua_erp.data_preparation.repositories.packing_repo impor
 )
 from verticals.sandhya_aqua_erp.data_preparation.repositories.soaking_repo import (
     SoakingRepository,
+)
+
+from verticals.sandhya_aqua_erp.data_preparation.feature_engineering.engineer_supply_chain_features import (
+    GRNFeatureEngineer,
+    GradingFeatureEngineer,
+    SoakingFeatureEngineer,
+    CookingFeatureEngineer,
+    PackingFeatureEngineer,
 )
 
 import logging
@@ -86,6 +94,8 @@ def run_feature_wise_anomaly_detection():
 
             repo_instance = repo_mapper.get(repo_to_use)
 
+            # Step 1: Fetch data from the repository
+
             if repo_instance:
                 logger.info(f"Fetching data from {repo_to_use} for table {table_name}")
                 dataframe = repo_instance.get_individual_table(table_name)
@@ -98,6 +108,27 @@ def run_feature_wise_anomaly_detection():
                     logger.warning(
                         f"Failed to fetch data from {repo_to_use} for table {table_name}"
                     )
+
+            # Step 2: Perform feature engineering
+            feature_engineer = None
+            if repo_to_use == "GRNRepository":
+                feature_engineer = GRNFeatureEngineer(dataframe)
+            elif repo_to_use == "GradingRepository":
+                feature_engineer = GradingFeatureEngineer(dataframe)
+            elif repo_to_use == "SoakingRepository":
+                feature_engineer = SoakingFeatureEngineer(dataframe)
+            elif repo_to_use == "CookingRepository":
+                feature_engineer = CookingFeatureEngineer(dataframe)
+            elif repo_to_use == "PackingRepository":
+                feature_engineer = PackingFeatureEngineer(dataframe)
+
+            if feature_engineer:
+                dataframe = feature_engineer.engineer_features(
+                    table_name=f"{database_name}.{table_name}"
+                )
+                logger.info(f"Feature engineering completed for {table_name}")
+            else:
+                logger.warning(f"No feature engineer found for {repo_to_use}")
 
             # Iterating through each feature
             for feature in item.get("features"):
@@ -126,7 +157,6 @@ def run_feature_wise_anomaly_detection():
                     logger.info(
                         f"Applying strategy: {strategy.get('name')} on feature: {feature_name} of table {table_name}"
                     )
-                    strategy_name = strategy.get("name")
                     params = strategy.get("params", {})
 
                     model_trainer_config = ModelTrainerConfig(

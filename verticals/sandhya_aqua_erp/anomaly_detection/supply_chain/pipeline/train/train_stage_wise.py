@@ -2,6 +2,7 @@ import json
 import sys
 import os
 
+
 sys.path.append(
     os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../../.."))
 )
@@ -98,7 +99,6 @@ def run_stage_wise_anomaly_detection():
                 # 7. Train the model
                 # 8. Save the model
                 # 9. Visualize anomaly if possible
-
                 model_trainer.train(data)
                 logger.info(
                     f"Model trained and saved for {strategy_name} on {repository_class}"

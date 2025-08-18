@@ -18,11 +18,13 @@ class GRNRepository(BaseRepository):
     def get_individual_table(
         self, table_name: str = "grn_items", column_names: Optional[List[str]] = None
     ):
-        query = f"SELECT * FROM {self.db_name}.{table_name}"
+        query = (
+            f"SELECT * FROM {self.db_name}.{table_name} WHERE created_at > '2025-06-01'"
+        )
 
         if column_names:
             columns = ", ".join(column_names)
-            query = f"SELECT {columns} FROM {self.db_name}.{table_name}"
+            query = f"SELECT {columns} FROM {self.db_name}.{table_name} WHERE created_at > '2025-06-01'"
 
         df = pd.read_sql(query, self.engine)
         return df

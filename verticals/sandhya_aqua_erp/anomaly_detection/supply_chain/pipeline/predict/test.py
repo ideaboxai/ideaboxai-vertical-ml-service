@@ -24,8 +24,8 @@ sandhya_erp_db_url = (
 
 query = """
 SELECT * FROM erpx_dev_production.pp_grading_readings
-ORDER BY session_id DESC
-LIMIT 10
+ORDER BY session_id ASC
+LIMIT 100
 """
 
 df = pd.read_sql(query, sqlalchemy.create_engine(sandhya_erp_db_url))
