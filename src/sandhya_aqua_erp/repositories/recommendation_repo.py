@@ -1,5 +1,5 @@
 import pandas as pd
-from sandhya_aqua_erp.db_conn import get_sandhya_db_engine as get_db_connection
+from src.sandhya_aqua_erp.db_conn import get_sandhya_db_engine as get_db_connection
 
 queries = {
     "grn_process_query": """SELECT gi.lot_number,
