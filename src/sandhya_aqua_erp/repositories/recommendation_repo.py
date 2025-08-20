@@ -1,3 +1,6 @@
+import pandas as pd
+from sandhya_aqua_erp.db_conn import get_sandhya_db_engine as get_db_connection
+
 queries = {
     "grn_process_query": """SELECT gi.lot_number,
                 gi.quantity as quantity_in_kg_at_GRN,
@@ -290,3 +293,22 @@ queries = {
                     order by 1, 5, 2, 3
 """,
 }
+
+
+async def run_predefined_query(query_key, params=None):
+    if query_key not in queries:
+        raise ValueError(f"Query key '{query_key}' not found.")
+    sql = queries[query_key]
+
+    engine = get_db_connection(connection_mode="async")
+    async with engine.connect() as conn:
+        df = await conn.run_sync(
+            lambda sync_conn: pd.read_sql(sql, sync_conn, params=params)
+        )
+    return df
+
+
+if __name__ == "__main__":
+    df = run_predefined_query("packing_yield_query", params=("5P2-464",))
+    df.to_json("new.json", index=False)
+    print(df.head(n=5))
