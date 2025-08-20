@@ -3,9 +3,9 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 import os
 from dotenv import load_dotenv
-from sandhya_aqua_erp.services.llm_recommender import OpenAIRecommender
-from sandhya_aqua_erp.repositories.recommendation_repo import run_predefined_query
-from sandhya_aqua_erp.api.v1.schemas.recommender_schema import RequestModel
+from src.sandhya_aqua_erp.services.llm_recommender import OpenAIRecommender
+from src.sandhya_aqua_erp.repositories.recommendation_repo import run_predefined_query
+from src.sandhya_aqua_erp.api.v1.schemas.recommender_schema import RequestModel
 
 _ = load_dotenv()
 

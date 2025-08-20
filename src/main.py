@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Request  # Added Request import
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
-from setup_routes import setup_routes
+from src.setup_routes import setup_routes
 from fastapi.security import HTTPBearer
 from dotenv import load_dotenv
 

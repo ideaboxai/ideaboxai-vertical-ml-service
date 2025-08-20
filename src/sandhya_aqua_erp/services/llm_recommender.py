@@ -3,7 +3,7 @@ from typing import AsyncGenerator, List, Dict, Any
 import os
 from openai import AsyncOpenAI
 
-from sandhya_aqua_erp.utils.prompt import (
+from src.sandhya_aqua_erp.utils.prompt import (
     Recommendation_system_prompt,
     Recommendation_user_prompt,
 )

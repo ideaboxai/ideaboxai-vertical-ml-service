@@ -1,8 +1,8 @@
 from fastapi import FastAPI
-from sandhya_aqua_erp.api.v1.anomaly_detection import (
+from src.sandhya_aqua_erp.api.v1.anomaly_detection import (
     router as anomaly_detection_router,
 )
-from sandhya_aqua_erp.api.v1.recommender import app as recommendation_router
+from src.sandhya_aqua_erp.api.v1.recommender import app as recommendation_router
 
 
 def setup_routes(app: FastAPI):
