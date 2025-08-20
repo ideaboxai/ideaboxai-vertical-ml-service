@@ -1,6 +1,6 @@
 from fastapi import APIRouter
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
-from typing import List, Optional
 import os
 from dotenv import load_dotenv
 from sandhya_aqua.services.llm_recommender import OpenAIRecommender
@@ -13,22 +13,27 @@ app = APIRouter()
 
 class RequestModel(BaseModel):
     lot_number: str
-    user_prompt: Optional[str] = None
-    chat_history: Optional[List[str]] = []
+    # stage_in_which_anomaly_is_detected: str   # These data must be taken from the database after the anomaly is detected and saved in database
+    # anomaly_type: str
+    # anomaly_context: str
+    # user_prompt: Optional[str] = None
+
+
+# anomaly_context = {"user_threshold": 10, "statistical_threshold": 15,"anomaly_value": 20}
 
 
 class ResponseModel(BaseModel):
-    reply: str
+    recommendation: str
 
 
 recommender = OpenAIRecommender(api_key=os.getenv("OPENAI_API_KEY"))
 
 
-@app.post("/recommend", response_model=ResponseModel)
-def recommend(request: RequestModel):
+@app.post("/recommend")
+async def recommend(request: RequestModel):
     lot_number = request.lot_number
-    user_prompt = request.user_prompt or "Give Recommendation for the lot number"
-    chat_history = request.chat_history or []
+    user_prompt = "Give Recommendation for the lot number"
+    chat_history = []
 
     structured_input = f"User Query: {user_prompt}" if user_prompt else "User Query:"
 
@@ -53,10 +58,11 @@ def recommend(request: RequestModel):
         ).to_string(index=False),
     }
 
-    reply = recommender.get_recommendation(
-        structured_input,
-        chat_history,
-        parameters=parameters,
+    return StreamingResponse(
+        recommender.get_recommendation_stream(
+            structured_input,
+            chat_history,
+            parameters=parameters,
+        ),
+        media_type="text/event-stream",
     )
-
-    return {"reply": reply}

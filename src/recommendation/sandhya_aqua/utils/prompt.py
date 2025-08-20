@@ -37,12 +37,12 @@ Yield Upto Peeling Process
 {packing_yield_parameters}
 
 user query: {user_query}
-"""
 
-need_too_Add = """For each detected issue, follow this format:
+
+For each detected issue, follow this format:
 
 ---
-**[Stage Name] Process Yield Analysis**
+**Stage Name Process Analysis**
 
 **Issue:** Clearly state the yield issue in one sentence, comparing actual vs. expected/target (e.g., "Weight loss exceeds normal range (-6.6% vs target -5.0%)").
 
@@ -58,7 +58,13 @@ Only report on stages that have meaningful deviations or risks.
 ----
 Your main task is to provide recommendation based on the given data by analyzing it what is the main cause of the issue that the Sandhya Aqua may be facing.
 Provide the specific suggestions.
-If all the data in any of the process is empty consider the process is ongoing.
+If all the data in any of the process is empty consider the process is ongoing or skipped.
+"""
+
+need_too_Add = """ 
+The detected anomaly is in the {stage_name} process.
+The anomaly is {anomaly_type} and the anomaly is in the {anomaly_context} context.
+The anomaly is detected in the {anomaly_value} value.
 """
 
 for_testing_can_be_added = """The acceptable range of yield is 90%...."""
