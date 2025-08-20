@@ -1,0 +1,841 @@
+[
+    {
+        "database_name": "erpx_dev_rm_procurement",
+        "table_name": "grn_items",
+        "repository_class": "GRNRepository",
+        "features": [
+            {
+                "name": "quantity",
+                "strategies": [
+                    {
+                        "name": "iqr",
+                        "params": {
+                            "iqr_multiplier": 1.5,
+                            "is_non_negative_feature": true
+                        }
+                    },
+                    {
+                        "name": "mad",
+                        "params": {
+                            "mad_multiplier": 3.5,
+                            "is_non_negative_feature": true
+                        }
+                    }
+                ]
+            },
+            {
+                "name": "count",
+                "strategies": [
+                    {
+                        "name": "iqr",
+                        "params": {
+                            "iqr_multiplier": 1.5,
+                            "is_non_negative_feature": true
+                        }
+                    },
+                    {
+                        "name": "mad",
+                        "params": {
+                            "mad_multiplier": 3.5,
+                            "is_non_negative_feature": true
+                        }
+                    }
+                ]
+            },
+            {
+                "name": "received_boxes",
+                "strategies": [
+                    {
+                        "name": "iqr",
+                        "params": {
+                            "iqr_multiplier": 1.5,
+                            "is_non_negative_feature": true
+                        }
+                    },
+                    {
+                        "name": "mad",
+                        "params": {
+                            "mad_multiplier": 3.5,
+                            "is_non_negative_feature": true
+                        }
+                    }
+                ]
+            },
+            {
+                "name": "soft_percentage",
+                "strategies": [
+                    {
+                        "name": "iqr",
+                        "params": {
+                            "iqr_multiplier": 1.5,
+                            "is_non_negative_feature": true
+                        }
+                    },
+                    {
+                        "name": "mad",
+                        "params": {
+                            "mad_multiplier": 3.5,
+                            "is_non_negative_feature": true
+                        }
+                    }
+                ]
+            },
+            {
+                "name": "boxes",
+                "strategies": [
+                    {
+                        "name": "iqr",
+                        "params": {
+                            "iqr_multiplier": 1.5,
+                            "is_non_negative_feature": true
+                        }
+                    },
+                    {
+                        "name": "mad",
+                        "params": {
+                            "mad_multiplier": 3.5,
+                            "is_non_negative_feature": true
+                        }
+                    }
+                ]
+            },
+            {
+                "name": "antibiotic_test",
+                "strategies": [
+                    {
+                        "name": "iqr",
+                        "params": {
+                            "iqr_multiplier": 1.5,
+                            "is_non_negative_feature": true
+                        }
+                    },
+                    {
+                        "name": "mad",
+                        "params": {
+                            "mad_multiplier": 3.5,
+                            "is_non_negative_feature": true
+                        }
+                    }
+                ]
+            },
+            {
+                "name": "fungus_percentage",
+                "strategies": [
+                    {
+                        "name": "iqr",
+                        "params": {
+                            "iqr_multiplier": 1.5,
+                            "is_non_negative_feature": true
+                        }
+                    },
+                    {
+                        "name": "mad",
+                        "params": {
+                            "mad_multiplier": 3.5,
+                            "is_non_negative_feature": true
+                        }
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "database_name": "erpx_dev_production",
+        "table_name": "pp_grading",
+        "repository_class": "GradingRepository",
+        "features": [
+            {
+                "name": "crate_weight",
+                "strategies": [
+                    {
+                        "name": "iqr",
+                        "params": {
+                            "iqr_multiplier": 1.5,
+                            "is_non_negative_feature": true
+                        }
+                    },
+                    {
+                        "name": "mad",
+                        "params": {
+                            "mad_multiplier": 3.5,
+                            "is_non_negative_feature": true
+                        }
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "database_name": "erpx_dev_production",
+        "table_name": "pp_grading_grades",
+        "repository_class": "GradingRepository",
+        "features": [
+            {
+                "name": "count",
+                "strategies": [
+                    {
+                        "name": "iqr",
+                        "params": {
+                            "iqr_multiplier": 1.5,
+                            "is_non_negative_feature": true
+                        }
+                    },
+                    {
+                        "name": "mad",
+                        "params": {
+                            "mad_multiplier": 3.5,
+                            "is_non_negative_feature": true
+                        }
+                    }
+                ]
+            },
+            {
+                "name": "uniformity_ratio",
+                "strategies": [
+                    {
+                        "name": "iqr",
+                        "params": {
+                            "iqr_multiplier": 1.5,
+                            "is_non_negative_feature": true
+                        }
+                    },
+                    {
+                        "name": "mad",
+                        "params": {
+                            "mad_multiplier": 3.5,
+                            "is_non_negative_feature": true
+                        }
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "database_name": "erpx_dev_production",
+        "table_name": "pp_grading_readings",
+        "repository_class": "GradingRepository",
+        "features": [
+            {
+                "name": "count",
+                "strategies": [
+                    {
+                        "name": "iqr",
+                        "params": {
+                            "iqr_multiplier": 1.5,
+                            "is_non_negative_feature": true
+                        }
+                    },
+                    {
+                        "name": "mad",
+                        "params": {
+                            "mad_multiplier": 3.5,
+                            "is_non_negative_feature": true
+                        }
+                    }
+                ]
+            },
+            {
+                "name": "weight",
+                "strategies": [
+                    {
+                        "name": "iqr",
+                        "params": {
+                            "iqr_multiplier": 1.5,
+                            "is_non_negative_feature": true
+                        }
+                    },
+                    {
+                        "name": "mad",
+                        "params": {
+                            "mad_multiplier": 3.5,
+                            "is_non_negative_feature": true
+                        }
+                    }
+                ]
+            },
+            {
+                "name": "crates",
+                "strategies": [
+                    {
+                        "name": "iqr",
+                        "params": {
+                            "iqr_multiplier": 1.5,
+                            "is_non_negative_feature": true
+                        }
+                    },
+                    {
+                        "name": "z_score",
+                        "params": {
+                            "z_max_threshold": 3.0,
+                            "is_non_negative_feature": true
+                        }
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "database_name": "erpx_dev_production",
+        "table_name": "pp_soaking_lot",
+        "repository_class": "SoakingRepository",
+        "features": [
+            {
+                "name": "count",
+                "strategies": [
+                    {
+                        "name": "iqr",
+                        "params": {
+                            "iqr_multiplier": 1.5,
+                            "is_non_negative_feature": true
+                        }
+                    },
+                    {
+                        "name": "mad",
+                        "params": {
+                            "mad_multiplier": 3.5,
+                            "is_non_negative_feature": true
+                        }
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "database_name": "erpx_dev_production",
+        "table_name": "pp_soaking",
+        "repository_class": "SoakingRepository",
+        "features": [
+            {
+                "name": "soak_time",
+                "strategies": [
+                    {
+                        "name": "iqr",
+                        "params": {
+                            "iqr_multiplier": 1.5,
+                            "is_non_negative_feature": true
+                        }
+                    },
+                    {
+                        "name": "mad",
+                        "params": {
+                            "mad_multiplier": 3.5,
+                            "is_non_negative_feature": true
+                        }
+                    }
+                ]
+            },
+            {
+                "name": "crate_weight",
+                "strategies": [
+                    {
+                        "name": "iqr",
+                        "params": {
+                            "iqr_multiplier": 1.5,
+                            "is_non_negative_feature": true
+                        }
+                    },
+                    {
+                        "name": "mad",
+                        "params": {
+                            "mad_multiplier": 3.5,
+                            "is_non_negative_feature": true
+                        }
+                    }
+                ]
+            },
+            {
+                "name": "soakin_count",
+                "strategies": [
+                    {
+                        "name": "iqr",
+                        "params": {
+                            "iqr_multiplier": 1.5,
+                            "is_non_negative_feature": true
+                        }
+                    },
+                    {
+                        "name": "mad",
+                        "params": {
+                            "mad_multiplier": 3.5,
+                            "is_non_negative_feature": true
+                        }
+                    }
+                ]
+            },
+            {
+                "name": "actual_soaking_time_in_minutes",
+                "strategies": [
+                    {
+                        "name": "iqr",
+                        "params": {
+                            "iqr_multiplier": 1.5,
+                            "is_non_negative_feature": true
+                        }
+                    },
+                    {
+                        "name": "mad",
+                        "params": {
+                            "mad_multiplier": 3.5,
+                            "is_non_negative_feature": true
+                        }
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "database_name": "erpx_dev_production",
+        "table_name": "pp_soaking_readings",
+        "repository_class": "SoakingRepository",
+        "features": [
+            {
+                "name": "weight",
+                "strategies": [
+                    {
+                        "name": "iqr",
+                        "params": {
+                            "iqr_multiplier": 1.5,
+                            "is_non_negative_feature": true
+                        }
+                    },
+                    {
+                        "name": "mad",
+                        "params": {
+                            "mad_multiplier": 3.5,
+                            "is_non_negative_feature": true
+                        }
+                    }
+                ]
+            },
+            {
+                "name": "crates",
+                "strategies": [
+                    {
+                        "name": "iqr",
+                        "params": {
+                            "iqr_multiplier": 1.5,
+                            "is_non_negative_feature": true
+                        }
+                    },
+                    {
+                        "name": "z_score",
+                        "params": {
+                            "z_max_threshold": 3.0,
+                            "is_non_negative_feature": true
+                        }
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "database_name": "erpx_dev_production",
+        "table_name": "pp_soaking_temperature",
+        "repository_class": "SoakingRepository",
+        "features": [
+            {
+                "name": "temperature",
+                "strategies": [
+                    {
+                        "name": "iqr",
+                        "params": {
+                            "iqr_multiplier": 1.5,
+                            "is_non_negative_feature": true
+                        }
+                    },
+                    {
+                        "name": "mad",
+                        "params": {
+                            "mad_multiplier": 3.5,
+                            "is_non_negative_feature": true
+                        }
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "database_name": "erpx_dev_production",
+        "table_name": "pp_cooking_lot",
+        "repository_class": "CookingRepository",
+        "features": [
+            {
+                "name": "count",
+                "strategies": [
+                    {
+                        "name": "iqr",
+                        "params": {
+                            "iqr_multiplier": 1.5,
+                            "is_non_negative_feature": true
+                        }
+                    },
+                    {
+                        "name": "mad",
+                        "params": {
+                            "mad_multiplier": 3.5,
+                            "is_non_negative_feature": true
+                        }
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "database_name": "erpx_dev_production",
+        "table_name": "pp_cooking",
+        "repository_class": "CookingRepository",
+        "features": [
+            {
+                "name": "cooking_temp",
+                "strategies": [
+                    {
+                        "name": "iqr",
+                        "params": {
+                            "iqr_multiplier": 1.5,
+                            "is_non_negative_feature": true
+                        }
+                    },
+                    {
+                        "name": "z_score",
+                        "params": {
+                            "z_max_threshold": 3.0,
+                            "is_non_negative_feature": true
+                        }
+                    }
+                ]
+            },
+            {
+                "name": "chilling_temp",
+                "strategies": [
+                    {
+                        "name": "iqr",
+                        "params": {
+                            "iqr_multiplier": 1.5,
+                            "is_non_negative_feature": true
+                        }
+                    },
+                    {
+                        "name": "z_score",
+                        "params": {
+                            "z_max_threshold": 3.0,
+                            "is_non_negative_feature": true
+                        }
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "database_name": "erpx_dev_production",
+        "table_name": "pp_cooking_readings",
+        "repository_class": "CookingRepository",
+        "features": [
+            {
+                "name": "temperature",
+                "strategies": [
+                    {
+                        "name": "iqr",
+                        "params": {
+                            "iqr_multiplier": 1.5,
+                            "is_non_negative_feature": true
+                        }
+                    },
+                    {
+                        "name": "mad",
+                        "params": {
+                            "mad_multiplier": 3.5,
+                            "is_non_negative_feature": true
+                        }
+                    }
+                ]
+            },
+            {
+                "name": "temperature_type",
+                "strategies": [
+                    {
+                        "name": "iqr",
+                        "params": {
+                            "iqr_multiplier": 1.5,
+                            "is_non_negative_feature": true
+                        }
+                    },
+                    {
+                        "name": "mad",
+                        "params": {
+                            "mad_multiplier": 3.5,
+                            "is_non_negative_feature": true
+                        }
+                    }
+                ]
+            },
+            {
+                "name": "temperature_fault",
+                "strategies": [
+                    {
+                        "name": "iqr",
+                        "params": {
+                            "iqr_multiplier": 1.5,
+                            "is_non_negative_feature": true
+                        }
+                    },
+                    {
+                        "name": "mad",
+                        "params": {
+                            "mad_multiplier": 3.5,
+                            "is_non_negative_feature": true
+                        }
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "database_name": "erpx_dev_production",
+        "table_name": "pp_packing",
+        "repository_class": "PackingRepository",
+        "features": [
+            {
+                "name": "net_weight",
+                "strategies": [
+                    {
+                        "name": "iqr",
+                        "params": {
+                            "iqr_multiplier": 1.5,
+                            "is_non_negative_feature": true
+                        }
+                    },
+                    {
+                        "name": "mad",
+                        "params": {
+                            "mad_multiplier": 3.5,
+                            "is_non_negative_feature": true
+                        }
+                    }
+                ]
+            },
+            {
+                "name": "min_weight",
+                "strategies": [
+                    {
+                        "name": "iqr",
+                        "params": {
+                            "iqr_multiplier": 1.5,
+                            "is_non_negative_feature": true
+                        }
+                    },
+                    {
+                        "name": "mad",
+                        "params": {
+                            "mad_multiplier": 3.5,
+                            "is_non_negative_feature": true
+                        }
+                    }
+                ]
+            },
+            {
+                "name": "no_of_pouches",
+                "strategies": [
+                    {
+                        "name": "iqr",
+                        "params": {
+                            "iqr_multiplier": 1.5,
+                            "is_non_negative_feature": true
+                        }
+                    },
+                    {
+                        "name": "mad",
+                        "params": {
+                            "mad_multiplier": 3.5,
+                            "is_non_negative_feature": true
+                        }
+                    }
+                ]
+            },
+            {
+                "name": "pouch_weight",
+                "strategies": [
+                    {
+                        "name": "iqr",
+                        "params": {
+                            "iqr_multiplier": 1.5,
+                            "is_non_negative_feature": true
+                        }
+                    },
+                    {
+                        "name": "mad",
+                        "params": {
+                            "mad_multiplier": 3.5,
+                            "is_non_negative_feature": true
+                        }
+                    }
+                ]
+            },
+            {
+                "name": "min_glaze",
+                "strategies": [
+                    {
+                        "name": "iqr",
+                        "params": {
+                            "iqr_multiplier": 1.5,
+                            "is_non_negative_feature": true
+                        }
+                    },
+                    {
+                        "name": "mad",
+                        "params": {
+                            "mad_multiplier": 3.5,
+                            "is_non_negative_feature": true
+                        }
+                    }
+                ]
+            },
+            {
+                "name": "max_glaze",
+                "strategies": [
+                    {
+                        "name": "iqr",
+                        "params": {
+                            "iqr_multiplier": 1.5,
+                            "is_non_negative_feature": true
+                        }
+                    },
+                    {
+                        "name": "mad",
+                        "params": {
+                            "mad_multiplier": 3.5,
+                            "is_non_negative_feature": true
+                        }
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "database_name": "erpx_dev_production",
+        "table_name": "pp_packing_master_readings",
+        "repository_class": "PackingRepository",
+        "features": [
+            {
+                "name": "weight",
+                "strategies": [
+                    {
+                        "name": "iqr",
+                        "params": {
+                            "iqr_multiplier": 1.5,
+                            "is_non_negative_feature": true
+                        }
+                    },
+                    {
+                        "name": "mad",
+                        "params": {
+                            "mad_multiplier": 3.5,
+                            "is_non_negative_feature": true
+                        }
+                    }
+                ]
+            },
+            {
+                "name": "weight_limit",
+                "strategies": [
+                    {
+                        "name": "iqr",
+                        "params": {
+                            "iqr_multiplier": 1.5,
+                            "is_non_negative_feature": true
+                        }
+                    },
+                    {
+                        "name": "mad",
+                        "params": {
+                            "mad_multiplier": 3.5,
+                            "is_non_negative_feature": true
+                        }
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "database_name": "erpx_dev_production",
+        "table_name": "pp_packing_glazing_reading",
+        "repository_class": "PackingRepository",
+        "features": [
+            {
+                "name": "frozen_weight",
+                "strategies": [
+                    {
+                        "name": "iqr",
+                        "params": {
+                            "iqr_multiplier": 1.5,
+                            "is_non_negative_feature": true
+                        }
+                    },
+                    {
+                        "name": "mad",
+                        "params": {
+                            "mad_multiplier": 3.5,
+                            "is_non_negative_feature": true
+                        }
+                    }
+                ]
+            },
+            {
+                "name": "de_glazed_weight",
+                "strategies": [
+                    {
+                        "name": "iqr",
+                        "params": {
+                            "iqr_multiplier": 1.5,
+                            "is_non_negative_feature": true
+                        }
+                    },
+                    {
+                        "name": "mad",
+                        "params": {
+                            "mad_multiplier": 3.5,
+                            "is_non_negative_feature": true
+                        }
+                    }
+                ]
+            },
+            {
+                "name": "glaze_percentage",
+                "strategies": [
+                    {
+                        "name": "iqr",
+                        "params": {
+                            "iqr_multiplier": 1.5,
+                            "is_non_negative_feature": true
+                        }
+                    },
+                    {
+                        "name": "mad",
+                        "params": {
+                            "mad_multiplier": 3.5,
+                            "is_non_negative_feature": true
+                        }
+                    }
+                ]
+            },
+            {
+                "name": "duration",
+                "strategies": [
+                    {
+                        "name": "iqr",
+                        "params": {
+                            "iqr_multiplier": 1.5,
+                            "is_non_negative_feature": true
+                        }
+                    },
+                    {
+                        "name": "mad",
+                        "params": {
+                            "mad_multiplier": 3.5,
+                            "is_non_negative_feature": true
+                        }
+                    }
+                ]
+            }
+        ]
+    }
+]
