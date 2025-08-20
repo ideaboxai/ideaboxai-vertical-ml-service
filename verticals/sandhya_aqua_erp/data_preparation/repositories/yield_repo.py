@@ -118,7 +118,11 @@ class YieldRepository:
                         sl.count AS soaking_cnt,
                         ps.unit_id,
                         ps.sku,
-                        ps.sale_order AS soaking_sale_order,
+                        GROUP_CONCAT(
+                            DISTINCT ps.sale_order
+                            ORDER BY ps.sale_order ASC
+                            SEPARATOR ', '
+                        ) AS soaking_sale_orders,
                         CEIL(SUM(p.weight) - (SUM(p.crates) * MAX(ps.crate_weight))) AS soaking_weight
                     FROM
                         erpx_dev_production.pp_soaking_readings p
@@ -130,8 +134,7 @@ class YieldRepository:
                         ps.created_at >= DATE_SUB(CURDATE(), INTERVAL 2 MONTH)
                     GROUP BY
                         sl.lot_number,
-                        sl.count,
-                        ps.sale_order
+                        sl.count
                 ),
                 cooking_cte AS (
                     SELECT
@@ -160,7 +163,7 @@ class YieldRepository:
                 SELECT
                     gd.lot_name,
                     gd.sale_order  AS grading_sale_order,
-                    sd.soaking_sale_order,
+                    sd.soaking_sale_orders,
                     hc.grading_yield,
                     hc.grading_net_weight,
                     hc.grn_quantity,
