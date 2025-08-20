@@ -1,4 +1,11 @@
-from predict_feature_wise import predict
+"""
+To run this test: Use the command:
+python -m src.sandhya_aqua_erp.tests.test_feature_anomaly
+"""
+
+from src.sandhya_aqua_erp.anomaly_detection.supply_chain.pipeline.predict.predict_feature_wise import (
+    predict,
+)
 import pandas as pd
 import os
 from dotenv import load_dotenv

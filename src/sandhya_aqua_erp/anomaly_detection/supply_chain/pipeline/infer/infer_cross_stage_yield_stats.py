@@ -6,12 +6,12 @@ sys.path.append(
     os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../../../../"))
 )
 
-from src.anomaly_detection.components.model_trainer import (
+from ml_services.anomaly_detection.components.model_trainer import (
     ModelTrainer,
     ModelTrainerConfig,
 )
 
-from verticals.sandhya_aqua_erp.data_preparation.repositories.yield_repo import (
+from src.sandhya_aqua_erp.repositories.yield_repo import (
     YieldRepository,
 )
 
@@ -22,7 +22,9 @@ logger = logging.getLogger(__name__)
 
 
 def run_yield_anomaly_detection():
-    with open("verticals/sandhya_aqua_erp/configs/cross_stage_config.json") as f:
+    with open(
+        "src/sandhya_aqua_erp/anomaly_detection/supply_chain/configs/cross_stage_config.json"
+    ) as f:
         config_data = json.load(f)
 
     yield_repo = YieldRepository()

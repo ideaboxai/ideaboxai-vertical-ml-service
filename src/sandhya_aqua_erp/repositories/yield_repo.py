@@ -1,5 +1,5 @@
 import pandas as pd
-from ...db_conn import get_sandhya_db_engine
+from ..db_conn import get_sandhya_db_engine
 
 
 class YieldRepository:

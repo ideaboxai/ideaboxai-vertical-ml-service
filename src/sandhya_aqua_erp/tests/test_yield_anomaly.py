@@ -1,4 +1,11 @@
-from predict_cross_stage import predict
+"""
+To run this test: Use the command:
+python -m src.sandhya_aqua_erp.tests.test_yield_anomaly
+"""
+
+from src.sandhya_aqua_erp.anomaly_detection.supply_chain.pipeline.predict.predict_cross_stage import (
+    predict,
+)
 import pandas as pd
 import os
 from dotenv import load_dotenv
@@ -9,7 +16,7 @@ sys.path.append(
     os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../../../../"))
 )
 
-from verticals.sandhya_aqua_erp.data_preparation.repositories.yield_repo import (
+from src.sandhya_aqua_erp.repositories.yield_repo import (
     YieldRepository,
 )
 

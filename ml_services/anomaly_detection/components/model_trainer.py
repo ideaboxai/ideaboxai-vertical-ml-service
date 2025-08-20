@@ -1,7 +1,7 @@
 import joblib
 import pandas as pd
 from dataclasses import dataclass
-from src.anomaly_detection.factory import get_detector
+from ml_services.anomaly_detection.factory import get_detector
 from typing import Optional
 
 STAT_DETECTORS = {"iqr", "z_score", "mad"}

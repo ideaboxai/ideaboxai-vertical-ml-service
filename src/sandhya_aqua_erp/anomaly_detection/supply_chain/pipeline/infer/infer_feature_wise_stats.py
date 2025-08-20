@@ -13,28 +13,28 @@ sys.path.append(
     os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../../../../"))
 )
 
-from src.anomaly_detection.components.model_trainer import (
+from ml_services.anomaly_detection.components.model_trainer import (
     ModelTrainer,
     ModelTrainerConfig,
 )
 
-from verticals.sandhya_aqua_erp.data_preparation.repositories.cooking_repo import (
+from src.sandhya_aqua_erp.repositories.cooking_repo import (
     CookingRepository,
 )
-from verticals.sandhya_aqua_erp.data_preparation.repositories.grading_repo import (
+from src.sandhya_aqua_erp.repositories.grading_repo import (
     GradingRepository,
 )
-from verticals.sandhya_aqua_erp.data_preparation.repositories.grn_repo import (
+from src.sandhya_aqua_erp.repositories.grn_repo import (
     GRNRepository,
 )
-from verticals.sandhya_aqua_erp.data_preparation.repositories.packing_repo import (
+from src.sandhya_aqua_erp.repositories.packing_repo import (
     PackingRepository,
 )
-from verticals.sandhya_aqua_erp.data_preparation.repositories.soaking_repo import (
+from src.sandhya_aqua_erp.repositories.soaking_repo import (
     SoakingRepository,
 )
 
-from verticals.sandhya_aqua_erp.data_preparation.feature_engineering.engineer_supply_chain_features import (
+from src.sandhya_aqua_erp.feature_engineering.engineer_supply_chain_features import (
     GRNFeatureEngineer,
     GradingFeatureEngineer,
     SoakingFeatureEngineer,
@@ -56,7 +56,8 @@ def run_feature_wise_anomaly_detection():
     """
 
     with open(
-        "verticals/sandhya_aqua_erp/configs/feature_wise_config.json", "r"
+        "src/sandhya_aqua_erp/anomaly_detection/supply_chain/configs/feature_wise_config.json",
+        "r",
     ) as file:
         config_data = json.load(file)
 
