@@ -99,7 +99,7 @@
                 ]
             },
             {
-                "name": "grn_yield",
+                "name": "grading_yield",
                 "strategies": [
                     {
                         "name": "iqr",
@@ -402,14 +402,14 @@
                         "name": "iqr",
                         "params": {
                             "iqr_multiplier": 1.5,
-                            "is_non_negative_feature": false
+                            "is_non_negative_feature": true
                         }
                     },
                     {
                         "name": "mad",
                         "params": {
                             "mad_multiplier": 3.5,
-                            "is_non_negative_feature": false
+                            "is_non_negative_feature": true
                         }
                     }
                 ]

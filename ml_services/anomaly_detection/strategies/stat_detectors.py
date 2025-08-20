@@ -53,6 +53,9 @@ class ZScoreDetector(BaseAnomalyDetector):
         else:
             values = data
         mean_ = values.mean()
+
+        is_non_negative_feature = self.params.get("is_non_negative_feature", True)
+
         std_ = values.std()
         z_max_threshold = self.params.get("z_max_threshold", 3.0)
 
@@ -60,7 +63,10 @@ class ZScoreDetector(BaseAnomalyDetector):
             f"ZScoreDetector fitted. Mean: {mean_:.2f}, Std: {std_:.2f}, Z-Max Threshold: {z_max_threshold:.2f}"
         )
 
-        lower_bound = mean_ - z_max_threshold * std_
+        if is_non_negative_feature:
+            lower_bound = max(0, mean_ - z_max_threshold * std_)
+        else:
+            lower_bound = mean_ - z_max_threshold * std_
         upper_bound = mean_ + z_max_threshold * std_
 
         thresholds = {"lower_bound": lower_bound, "upper_bound": upper_bound}
@@ -91,7 +97,12 @@ class MADDetector(BaseAnomalyDetector):
         mad = np.median(np.abs(values - median))
         multiplier = self.params.get("mad_multiplier", 3.5)
 
-        lower_bound = median - multiplier * mad
+        is_non_negative_feature = self.params.get("is_non_negative_feature", True)
+
+        if is_non_negative_feature:
+            lower_bound = max(0, median - multiplier * mad)
+        else:
+            lower_bound = median - multiplier * mad
         upper_bound = median + multiplier * mad
 
         thresholds = {"lower_bound": lower_bound, "upper_bound": upper_bound}
