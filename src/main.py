@@ -1,9 +1,11 @@
 from fastapi import FastAPI, Request  # Added Request import
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
-from .setup_routes import setup_routes
+from setup_routes import setup_routes
 from fastapi.security import HTTPBearer
+from dotenv import load_dotenv
 
+load_dotenv()
 
 security = HTTPBearer()
 
@@ -59,3 +61,21 @@ async def handle_https_redirects(request: Request, call_next):
 
 
 setup_routes(app)
+
+if __name__ == "__main__":
+    import os
+    import uvicorn
+
+    host = os.getenv("HOST", "0.0.0.0")
+    port = int(os.getenv("PORT", "8000"))
+    reload = os.getenv("RELOAD", "false").lower() == "true"
+
+    uvicorn.run(
+        "main:app",
+        host=host,
+        port=port,
+        reload=reload,
+        proxy_headers=True,
+        forwarded_allow_ips="*",
+        log_level=os.getenv("LOG_LEVEL", "info"),
+    )

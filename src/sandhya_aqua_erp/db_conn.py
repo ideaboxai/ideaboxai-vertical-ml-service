@@ -1,11 +1,13 @@
 import os
 import sqlalchemy
 from dotenv import load_dotenv
+from typing import Literal
+from sqlalchemy.ext.asyncio import create_async_engine
 
 load_dotenv()
 
 
-def get_sandhya_db_engine():
+def get_sandhya_db_engine(connection_mode: Literal["sync", "async"] = "sync"):
     """
     Returns the database engine URL for Sandhya ERP.
     """
@@ -23,6 +25,12 @@ def get_sandhya_db_engine():
     sandhya_erp_db_url = (
         f"mysql+pymysql://{DB_USERNAME}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
     )
-    engine = sqlalchemy.create_engine(sandhya_erp_db_url)
+    sandhya_erp_db_url_async = (
+        f"mysql+aiomysql://{DB_USERNAME}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+    )
+    if connection_mode == "sync":
+        engine = sqlalchemy.create_engine(sandhya_erp_db_url)
+    else:
+        engine = create_async_engine(sandhya_erp_db_url_async)
 
     return engine
