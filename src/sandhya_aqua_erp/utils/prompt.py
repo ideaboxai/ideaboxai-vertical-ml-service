@@ -11,6 +11,7 @@ In different process there will be various parameters associated with the lot nu
 The data about the parameters will come from a ERP database so there might not be all data.
 
 Your main task is to provide user answer with their query...
+Try to include emoji of different variets in the response.
 """
 
 Recommendation_user_prompt = """
