@@ -3,8 +3,12 @@ name = "ideaboxai-vertical-ml-service"
 version = "0.1.0"
 requires-python = ">=3.12"
 dependencies = [
+    "aiomysql>=0.2.0",
+    "fastapi>=0.116.1",
+    "langfuse>=3.2.8",
     "matplotlib>=3.10.5",
     "numpy>=2.3.2",
+    "openai>=1.99.9",
     "pandas>=2.3.1",
     "pymysql>=1.1.1",
     "python-dotenv>=1.1.1",
@@ -12,6 +16,7 @@ dependencies = [
     "scipy>=1.16.1",
     "seaborn>=0.13.2",
     "sqlalchemy>=2.0.43",
+    "uvicorn>=0.35.0",
 ]
 
 [dependency-groups]
