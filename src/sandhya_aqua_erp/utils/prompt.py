@@ -12,6 +12,7 @@ The data about the parameters will come from a ERP database so there might not b
 
 Your main task is to provide user answer with their query...
 Try to include emoji of different variets in the response.
+Render the response in markdown format with \n whereever there is new line
 """
 
 Recommendation_user_prompt = """
