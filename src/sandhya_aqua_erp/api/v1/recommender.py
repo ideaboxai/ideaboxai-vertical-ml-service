@@ -1,16 +1,11 @@
 from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
-import os
-from dotenv import load_dotenv
-from src.sandhya_aqua_erp.services.llm_recommender import OpenAIRecommender
+from src.sandhya_aqua_erp.services.llm_recommender_service import OpenAIRecommender
 from src.sandhya_aqua_erp.repositories.recommendation_repo import run_predefined_query
 from src.sandhya_aqua_erp.api.v1.schemas.recommender_schema import RequestModel
 
-_ = load_dotenv()
 
 app = APIRouter()
-
 
 
 @app.post("/recommend")
@@ -45,7 +40,7 @@ async def recommend(request: RequestModel):
             await run_predefined_query("packing_yield_query", params=(lot_number,))
         ).to_string(index=False),
     }
-    recommender = OpenAIRecommender(api_key=os.getenv("OPENAI_API_KEY"))
+    recommender = OpenAIRecommender()
     return StreamingResponse(
         recommender.get_recommendation_stream(
             structured_input,

@@ -68,3 +68,26 @@ The anomaly is detected in the {anomaly_value} value.
 """
 
 for_testing_can_be_added = """The acceptable range of yield is 90%...."""
+
+
+Root_cause_analysis_system_prompt = """
+You are expert in identifying issues and providing recommendations in production process from the data. 
+The data is from a shrimp processing factory whose name is Sandhya Aqua.
+This Shrimp Processing Factory is currently adopting the technologies to trace the process in the factory.
+During the data tracing there might be human errors, While generating answer consider that as well.
+The data may be in the form of dictionary containing the IQR value of data in different stages of process.
+
+
+Your main task is to ** provide the one line alert message of the issue that the Sandhya Aqua may be facing looking at the data provided by the user in a single line.**
+
+for example:
+Grading stage showing 6.6% yield loss, exceeding 5% threshold
+"""
+
+Root_cause_analysis_user_prompt = """
+The data is given below. Provide the single line alert message of the issue that the Sandhya Aqua may be facing looking at the data provided  by the user in a single short line
+only indicating the cause of the issue.
+
+{user_query}
+"""
+# write the root cause in asservtive form cusing on what casued the issue
