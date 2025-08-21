@@ -1,0 +1,40 @@
+# GitHub Actions Workflow for Ideabox ML services Deployment on EC2 via Docker Compose
+name: Deploy Centalapi Service to EC2 (Develop Branch)
+
+on:
+  push:
+    branches:
+      - develop
+
+env:
+  PROJECT_DIR: /home/ec2-user/ideaboxai-vertical-ml-service
+
+jobs:
+  build-and-deploy:
+    runs-on: self-hosted
+
+    steps:
+      - name: 🖨️ Print Working Directory
+        run: pwd
+
+      - name: 📥 Pull Latest Code from GitHub
+        run : |
+          cd $PROJECT_DIR
+
+          git checkout develop
+          git stash
+          git stash clear
+
+          git pull origin develop
+
+      - name: 🐳 Rebuild & Restart Services with Docker Compose
+        run: |
+          cd $PROJECT_DIR
+
+          docker-compose down
+          docker-compose up --build -d
+
+      - name: 🧹 Clean Up Docker System (Images, Caches)
+        if: success()
+        run: |
+          docker system prune -f
