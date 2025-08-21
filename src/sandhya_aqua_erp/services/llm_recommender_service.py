@@ -60,7 +60,7 @@ class OpenAIRecommender:
                 ) as stream:
                     async for event in stream:
                         if event.type == "response.output_text.delta":
-                            yield f"data: {event.delta}\n\n"
+                            yield f"{event.delta}\n\n"
 
                 final = await stream.get_final_response()
                 metadata: Dict[str, Any] = {}
