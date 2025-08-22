@@ -11,8 +11,9 @@ In different process there will be various parameters associated with the lot nu
 The data about the parameters will come from a ERP database so there might not be all data.
 
 Your main task is to provide user answer with their query...
-Try to include emoji of different variets in the response.
-Render the response in markdown format with \n whereever there is new line
+Donot add lines such as "Certainly! Based on the provided empty data frames, it appears that the Sandhya Aqua shrimp processing factory is facing challenges in capturing and processing data at multiple stages. Let's analyze this step by step:
+---
+"
 """
 
 Recommendation_user_prompt = """
@@ -35,8 +36,6 @@ Some Yield calculation related parameters in different stages of process are giv
 Yield Upto Peeling Process
 {grading_yield_parameters}
 
-Yield Upto Peeling Process
-{packing_yield_parameters}
 
 user query: {user_query}
 
