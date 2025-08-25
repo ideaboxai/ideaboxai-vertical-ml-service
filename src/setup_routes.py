@@ -6,6 +6,7 @@ from src.sandhya_aqua_erp.api.v1.recommender import app as recommendation_router
 from src.sandhya_aqua_erp.api.v1.root_cause_analysis import (
     router as root_cause_analysis_router,
 )
+from src.sandhya_aqua_erp.api.v1.farmer_ranking import router as farmer_ranking_router
 
 
 def setup_routes(app: FastAPI):
@@ -23,4 +24,9 @@ def setup_routes(app: FastAPI):
         root_cause_analysis_router,
         prefix="/api/v1/sandhya/root-cause-analysis",
         tags=["Sandhya Recommendation"],
+    )
+    app.include_router(
+        farmer_ranking_router,
+        prefix="/api/v1/sandhya/farmer-ranking",
+        tags=["Sandhya Farmer Ranking"],
     )
