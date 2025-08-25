@@ -1,0 +1,36 @@
+{
+    "strategy_name": "topsis",
+    "features":
+        [
+            {
+                "name": "avg_time_to_grn",
+                "impact": "-",
+                "weight": 1
+            },
+            {
+                "name": "total_actual_quantity",
+                "impact": "+",
+                "weight": 1
+            },
+            {
+                "name": "avg_quantity_variance",
+                "impact": "-",
+                "weight": 1
+            },
+            {
+                "name": "lots_supplied",
+                "impact": "+",
+                "weight": 1
+            },
+            {
+                "name": "avg_grading_yield",
+                "impact": "+",
+                "weight": 1
+            },
+            {
+                "name": "indent_count",
+                "impact": "+",
+                "weight": 1
+            }
+        ]
+}
