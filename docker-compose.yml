@@ -17,3 +17,11 @@ services:
       - PYTHONUNBUFFERED=1
     restart: unless-stopped
 
+  redis:
+    image: redis:7.2
+    container_name: ml-service-redis
+    command: >
+      redis-server --appendonly yes --maxmemory-policy volatile-ttl
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
