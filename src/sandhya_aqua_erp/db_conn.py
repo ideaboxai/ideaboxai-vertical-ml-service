@@ -34,3 +34,28 @@ def get_sandhya_db_engine(connection_mode: Literal["sync", "async"] = "sync"):
         engine = create_async_engine(sandhya_erp_db_url_async)
 
     return engine
+
+
+def get_ideaboxai_db_engine(connection_mode: Literal["sync", "async"] = "sync"):
+    """
+    Returns the database engine URL for IdeaboxAI.
+    """
+    DB_HOST = os.getenv("IDEABOXAI_POSTGRES_DB_HOST")
+    DB_PORT = os.getenv("IDEABOXAI_POSTGRES_DB_PORT")
+    DB_USERNAME = os.getenv("IDEABOXAI_POSTGRES_DB_USERNAME")
+    DB_PASSWORD = os.getenv("IDEABOXAI_POSTGRES_DB_PASSWORD")
+    DB_NAME = os.getenv("IDEABOXAI_POSTGRES_DB_NAME")
+
+    if not all([DB_HOST, DB_PORT, DB_USERNAME, DB_PASSWORD, DB_NAME]):
+        raise ValueError(
+            "IdeaboxAI Database connection parameters are not set in the environment variables."
+        )
+
+    ideaboxai_db_url = f"postgresql+psycopg2://{DB_USERNAME}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+    ideaboxai_db_url_async = f"postgresql+asyncpg://{DB_USERNAME}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+    if connection_mode == "sync":
+        engine = sqlalchemy.create_engine(ideaboxai_db_url)
+    else:
+        engine = create_async_engine(ideaboxai_db_url_async)
+
+    return engine
