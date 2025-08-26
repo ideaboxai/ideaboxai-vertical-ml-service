@@ -3,6 +3,10 @@ from ..db_conn import get_sandhya_db_engine
 from typing import Optional
 
 import pandas as pd
+import uuid
+import math
+
+from psycopg2.extras import execute_values
 
 
 class SupplierRepository(BaseRepository):
@@ -12,8 +16,8 @@ class SupplierRepository(BaseRepository):
 
     db_name = "erpx_dev_rm_procurement"
 
-    def __init__(self):
-        self.engine = get_sandhya_db_engine()
+    def __init__(self, engine=None):
+        self.engine = engine or get_sandhya_db_engine()
 
     def get_farmer_related_data(
         self, interval: Optional[str] = None, exact_date_time: Optional[str] = None
@@ -129,8 +133,90 @@ class SupplierRepository(BaseRepository):
         df = pd.read_sql(query, self.engine)
         return df
 
-    def insert_farmer_rankings(self):
-        pass
+    def insert_farmer_rankings(
+        self,
+        data: pd.DataFrame,
+        metric: str = "topsis",
+        moving_average: str = "24 MONTH",
+    ):
+        def safe_cast(val, cast_type, default=None):
+            try:
+                if pd.isna(val) or (isinstance(val, float) and math.isnan(val)):
+                    return default
+                return cast_type(val)
+            except Exception:
+                return default
+
+        # Prepare all records at once
+        records = []
+        current_time = pd.Timestamp.now()
+
+        for _, row in data.iterrows():
+            farmer_id = safe_cast(row["farmer"], int)
+            farmer = (
+                str(row["farmer_name"]) if not pd.isna(row["farmer_name"]) else None
+            )
+            service_period_in_months = safe_cast(
+                row["farmer_service_period_in_months"], float
+            )
+            avg_time_to_grn_in_hrs = safe_cast(row["avg_time_to_grn"], float)
+            total_actual_quantity_in_kg = safe_cast(row["total_actual_quantity"], float)
+            avg_quantity_variance_in_kg = safe_cast(row["avg_quantity_variance"], float)
+            avg_abs_count_variance_indent_grn_per_kg = safe_cast(
+                row["abs_avg_count_variance_indent_grn"], float
+            )
+            avg_count_variance_grn_grading_per_kg = safe_cast(
+                row["avg_count_variance_grn_grading"], float
+            )
+            avg_grading_yield_percentage = safe_cast(row["avg_grading_yield"], float)
+            indent_count = safe_cast(row["indent_count"], int)
+            rank = safe_cast(row["rank"], int)
+            score = safe_cast(row["relative_closeness"], float)
+            score = score * 100 if score is not None else None
+
+            # Convert to tuple for execute_values
+            record = (
+                str(uuid.uuid4()),
+                farmer_id,
+                farmer,
+                service_period_in_months,
+                avg_time_to_grn_in_hrs,
+                total_actual_quantity_in_kg,
+                avg_quantity_variance_in_kg,
+                avg_abs_count_variance_indent_grn_per_kg,
+                avg_count_variance_grn_grading_per_kg,
+                avg_grading_yield_percentage,
+                indent_count,
+                metric,
+                rank,
+                score,
+                moving_average,
+                current_time,
+                current_time,
+            )
+            records.append(record)
+
+        # Single database connection and batch insert
+        if records:
+            insert_query = """
+                INSERT INTO farmer_ranks (
+                    id, farmer_id, farmer, service_period_in_months, avg_time_to_grn_in_hrs,
+                    total_actual_quantity_in_kg, avg_quantity_variance_in_kg, avg_abs_count_variance_indent_grn_per_kg,
+                    avg_count_variance_grn_grading_per_kg, avg_grading_yield_percentage, indent_count,
+                    metric, rank, score, moving_average, created_at, updated_at
+                ) VALUES %s
+            """
+
+            raw_conn = self.engine.raw_connection()
+            try:
+                cursor = raw_conn.cursor()
+                execute_values(
+                    cursor, insert_query, records, template=None, page_size=1000
+                )
+                raw_conn.commit()
+                cursor.close()
+            finally:
+                raw_conn.close()
 
     def get_combined_table(self):
         return super().get_combined_table()

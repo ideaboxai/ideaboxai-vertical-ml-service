@@ -9,6 +9,7 @@ from ml_services.scoring_ranking.compute_rank import (
     ScoringRankingConfig,
 )
 
+from src.sandhya_aqua_erp.db_conn import get_ideaboxai_db_engine
 from src.sandhya_aqua_erp.repositories.supplier_repo import SupplierRepository
 
 import logging
@@ -57,9 +58,14 @@ def run_topsis_for_farmer_ranking(
 
     ranked_data = ranked_data.sort_values(by="rank")
 
-    output_path = config_data.get(
-        "output_path", "count_considered_farmer_ranking_results.csv"
-    )
-    ranked_data.to_csv(output_path, index=False)
-    # --------implementation to persist in the db
-    logger.info(f"Ranked data saved to {output_path}")
+    try:
+        # Insert to DB
+        logger.info("Inserting farmer rankings into database...")
+        supplier_repo = SupplierRepository(engine=get_ideaboxai_db_engine())
+        supplier_repo.insert_farmer_rankings(
+            data=ranked_data, metric="topsis", moving_average=interval
+        )
+        return True
+    except Exception as e:
+        logger.error(f"Error inserting farmer rankings into database: {e}")
+        return False
