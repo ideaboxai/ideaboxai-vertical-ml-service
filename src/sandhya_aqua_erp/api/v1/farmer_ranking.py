@@ -28,9 +28,15 @@ async def trigger_farmer_ranking(
                 )
             run_topsis_for_farmer_ranking(exact_date_time=time_value)
         else:
-            interval = time_value or "1 MONTH"
-            run_topsis_for_farmer_ranking(interval=interval)
-
+            interval = time_value or "24 MONTH"
+            run_success = run_topsis_for_farmer_ranking(interval=interval)
+            if not run_success:
+                return JSONResponse(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    content={
+                        "message": "Failed to rank farmers and insert into database."
+                    },
+                )
         return JSONResponse(
             status_code=status.HTTP_200_OK,
             content={"message": "Farmer ranking process completed successfully."},

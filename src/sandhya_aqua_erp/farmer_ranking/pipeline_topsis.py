@@ -9,7 +9,8 @@ from ml_services.scoring_ranking.compute_rank import (
     ScoringRankingConfig,
 )
 
-from src.sandhya_aqua_erp.repositories.grn_repo import GRNRepository
+from src.sandhya_aqua_erp.db_conn import get_ideaboxai_db_engine
+from src.sandhya_aqua_erp.repositories.supplier_repo import SupplierRepository
 
 import logging
 
@@ -18,13 +19,13 @@ logger = logging.getLogger(__name__)
 
 
 def run_topsis_for_farmer_ranking(
-    interval: str = "1 MONTH", exact_date_time: str = None
+    interval: str = "24 MONTH", exact_date_time: str = None
 ):
     with open("src/sandhya_aqua_erp/farmer_ranking/topsis_config.json", "r") as file:
         config_data = json.load(file)
 
-    grn_repo = GRNRepository()
-    farmer_data = grn_repo.get_farmer_related_data(
+    supplier_repo = SupplierRepository()
+    farmer_data = supplier_repo.get_farmer_related_data(
         interval=interval, exact_date_time=exact_date_time
     )
 
@@ -36,12 +37,17 @@ def run_topsis_for_farmer_ranking(
     features = config_data["features"]
     feature_names = [f["name"] for f in features]
     impacts = [f["impact"] for f in features]
+
+    total_weight = sum(f["weight"] for f in features)
+    for f in features:
+        f["weight"] = f["weight"] / total_weight if total_weight != 0 else 0
     weights = [f["weight"] for f in features]
 
     feature_data = farmer_data[["farmer"] + feature_names].copy()
 
     feature_data = feature_data.fillna(feature_data.mean())
 
+    logger.info("Starting TOPSIS ranking process...")
     ranked_data = ranking_model.rank(
         data=feature_data, nCol=feature_data.shape[1], impact=impacts, weights=weights
     )
@@ -52,7 +58,14 @@ def run_topsis_for_farmer_ranking(
 
     ranked_data = ranked_data.sort_values(by="rank")
 
-    # output_path = config_data.get("output_path", "farmer_ranking_results.csv")
-    # ranked_data.to_csv(output_path, index=False)
-    # --------implementation to persist in the db
-    # logger.info(f"Ranked data saved to {output_path}")
+    try:
+        # Insert to DB
+        logger.info("Inserting farmer rankings into database...")
+        supplier_repo = SupplierRepository(engine=get_ideaboxai_db_engine())
+        supplier_repo.insert_farmer_rankings(
+            data=ranked_data, metric="topsis", moving_average=interval
+        )
+        return True
+    except Exception as e:
+        logger.error(f"Error inserting farmer rankings into database: {e}")
+        return False
