@@ -124,6 +124,7 @@ import json
 import urllib.parse
 import requests
 from dotenv import load_dotenv
+import httpx
 
 load_dotenv()
 
@@ -138,16 +139,14 @@ def clean_data_from_cube_query(data_list):
         cleaned_data.append(cleaned_item)
     return cleaned_data
 
-def get_data_from_cube_query(query_key, lot_number, sale_order):
+async def get_data_from_cube_query(query_key, lot_number, sale_order):
     try:
         if query_key not in cube_queries:
             raise KeyError(f"Invalid query_key: {query_key}")
 
         query_dict = json.loads(cube_queries[query_key])
-
         query_dict["filters"][0]["values"] = [sale_order]
 
-        # Conditionally add the lot number filter as a dictionary object
         if lot_number:
             lot_filter = {
                 "member": "RECOMMENDATION.plant_lot_number",
@@ -159,8 +158,8 @@ def get_data_from_cube_query(query_key, lot_number, sale_order):
         query_str = json.dumps(query_dict)
 
         base_url = os.getenv("CUBE_BASE_URL")
-        encoded_query = urllib.parse.quote(json.dumps(query_str))
-        url = base_url + encoded_query
+        encoded_query = urllib.parse.quote(query_str)
+        url = f"{base_url}{encoded_query}"
 
         token = os.getenv("CUBE_TOKEN")
         if not token:
@@ -168,14 +167,13 @@ def get_data_from_cube_query(query_key, lot_number, sale_order):
 
         headers = {"Authorization": token, "Content-Type": "application/json"}
 
-        response = requests.get(url, headers=headers, timeout=10)
-        response.raise_for_status()
+        async with httpx.AsyncClient(timeout=20) as client:
+            response = await client.get(url, headers=headers)
+            response.raise_for_status()
+            data = response.json()
 
-        data = response.json()
         if "data" not in data:
-            raise KeyError(
-                f"Expected 'data' in response, got keys: {list(data.keys())}"
-            )
+            raise KeyError(f"Expected 'data' in response, got keys: {list(data.keys())}")
 
         return clean_data_from_cube_query(data["data"])
 
