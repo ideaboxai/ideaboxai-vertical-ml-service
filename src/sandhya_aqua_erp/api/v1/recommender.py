@@ -29,7 +29,7 @@ async def recommend(request: RequestModel):
     cache_key = f"recommend:{lot_number}:{sale_order}"
     cached_data = redis_client.get(cache_key)
 
-    mode = "stream"  # or "stream"
+    mode = "normal"  # or "stream"
     recommender = OpenAIRecommender(mode=mode)
 
     if cached_data:
