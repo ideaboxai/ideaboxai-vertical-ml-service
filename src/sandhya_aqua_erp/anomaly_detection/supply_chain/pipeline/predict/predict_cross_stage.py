@@ -157,14 +157,26 @@ def _calculate_deviation(values, strategy_results):
     for value in values:
         min_deviation = float("inf")
 
-        for strategy_name, results in strategy_results.items():
+        for results in strategy_results.values():
             lower_bound = results["lower_bound"]
             upper_bound = results["upper_bound"]
 
-            if pd.notna(lower_bound) and value < lower_bound:
+            if (
+                lower_bound is not None
+                and pd.notna(lower_bound)
+                and value is not None
+                and pd.notna(value)
+                and value < lower_bound
+            ):
                 deviation = abs((value - lower_bound) / lower_bound * 100)
                 min_deviation = min(min_deviation, deviation)
-            elif pd.notna(upper_bound) and value > upper_bound:
+            elif (
+                upper_bound is not None
+                and pd.notna(upper_bound)
+                and value is not None
+                and pd.notna(value)
+                and value > upper_bound
+            ):
                 deviation = abs((value - upper_bound) / upper_bound * 100)
                 min_deviation = min(min_deviation, deviation)
 
