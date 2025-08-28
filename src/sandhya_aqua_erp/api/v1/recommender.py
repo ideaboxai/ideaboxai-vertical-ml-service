@@ -4,14 +4,53 @@ from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
 from src.sandhya_aqua_erp.services.llm_recommender_service import OpenAIRecommender
 from src.sandhya_aqua_erp.api.v1.schemas.recommender_schema import RequestModel
-from src.sandhya_aqua_erp.services.cube_query_service import get_data_from_cube_query
+from src.sandhya_aqua_erp.services.cube_query_service import CubeService
 import asyncio
 
 app = APIRouter()
 
-# Redis client
 redis_client = redis.Redis(host="ml-service-redis", port=6379, decode_responses=True)
 # redis_client = redis.Redis(host="0.0.0.0", port=6379, decode_responses=True)
+
+
+async def fetch_process_parameters(lot_number: str):
+    cube_service = CubeService()
+    recommendation_lot_filter = {
+        "member": "RECOMMENDATION.plant_lot_number",
+        "operator": "equals",
+        "values": [lot_number],
+    }
+    anomaly_lot_filter = {
+        "member": "ANOMALY_NUMBER.lot_number",
+        "operator": "equals",
+        "values": [lot_number],
+    }
+    (
+        grn_process,
+        grading_process,
+        soaking_process,
+        cooking_process,
+        yield_process,
+        anomaly_data,
+    ) = await asyncio.gather(
+        cube_service.get_data("grn_process_query", lot_number,recommendation_lot_filter),
+        cube_service.get_data("grading_process_query", lot_number,recommendation_lot_filter),
+        cube_service.get_data("soaking_process_query", lot_number,recommendation_lot_filter),
+        cube_service.get_data("cooking_process_query", lot_number,recommendation_lot_filter),
+        cube_service.get_data("yield_calculation_query", lot_number,recommendation_lot_filter),
+        cube_service.get_data("anomaly_query", lot_number,anomaly_lot_filter),
+    )
+
+    parameters = {
+        "grn_process_parameters": grn_process,
+        "grading_process_parameters": grading_process,
+        "soaking_process_parameters": soaking_process,
+        "cooking_process_parameters": cooking_process,
+        "grading_yield_parameters": yield_process,
+        "anomaly_parameters": anomaly_data,
+    }
+
+    return parameters
 
 
 def ensure_sse_format(chunk: str) -> str:
@@ -24,9 +63,8 @@ def ensure_sse_format(chunk: str) -> str:
 @app.post("/recommend")
 async def recommend(request: RequestModel):
     lot_number = request.lot_number
-    sale_order = request.sale_order
 
-    cache_key = f"recommend:{lot_number}:{sale_order}"
+    cache_key = f"recommend:{lot_number}"
     cached_data = redis_client.get(cache_key)
 
     mode = "normal"  # or "stream"
@@ -47,37 +85,16 @@ async def recommend(request: RequestModel):
     chat_history = []
     structured_input = f"User Query: {user_prompt}" if user_prompt else "User Query:"
 
-    (
-        grn_process,
-        grading_process,
-        soaking_process,
-        cooking_process,
-        yield_process,
-    ) = await asyncio.gather(
-        get_data_from_cube_query("grn_process_query", lot_number, sale_order),
-        get_data_from_cube_query("grading_process_query", lot_number, sale_order),
-        get_data_from_cube_query("soaking_process_query", lot_number, sale_order),
-        get_data_from_cube_query("cooking_process_query", lot_number, sale_order),
-        get_data_from_cube_query("yield_calculation_query", lot_number, sale_order),
-    )
-
-    parameters = {
-        "grn_process_parameters": grn_process,
-        "grading_process_parameters": grading_process,
-        "soaking_process_parameters": soaking_process,
-        "cooking_process_parameters": cooking_process,
-        "grading_yield_parameters": yield_process,
-    }
+    parameters = await fetch_process_parameters(lot_number=lot_number)
 
     if mode == "stream":
-        # Await the coroutine to get the async generator
         response_stream = await recommender.get_recommendation(
             structured_input, chat_history, parameters=parameters
         )
 
         async def caching_stream():
             buffer = []
-            async for chunk in response_stream:  # iterate over the async generator
+            async for chunk in response_stream:
                 formatted_chunk = ensure_sse_format(chunk)
                 buffer.append(formatted_chunk)
                 yield formatted_chunk
