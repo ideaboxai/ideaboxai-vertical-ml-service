@@ -10,8 +10,8 @@ import asyncio
 app = APIRouter()
 
 # Redis client
-# redis_client = redis.Redis(host="ml-service-redis", port=6379, decode_responses=True)
-redis_client = redis.Redis(host="0.0.0.0", port=6379, decode_responses=True)
+redis_client = redis.Redis(host="ml-service-redis", port=6379, decode_responses=True)
+# redis_client = redis.Redis(host="0.0.0.0", port=6379, decode_responses=True)
 
 
 async def fetch_process_parameters(lot_number: str):
