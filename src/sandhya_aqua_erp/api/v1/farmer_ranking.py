@@ -6,6 +6,8 @@ from typing import Optional, Literal
 from src.sandhya_aqua_erp.farmer_ranking.pipeline_topsis import (
     run_topsis_for_farmer_ranking,
 )
+from src.sandhya_aqua_erp.utils.param_input_validator import param_input_validator
+
 from fastapi import HTTPException
 
 router = APIRouter()
@@ -26,9 +28,11 @@ async def trigger_farmer_ranking(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="time_value must be provided when time_format is 'EXACT'.",
                 )
+            param_input_validator(time_value)
             run_topsis_for_farmer_ranking(exact_date_time=time_value)
         else:
             interval = time_value or "24 MONTH"
+            param_input_validator(time_value)
             run_success = run_topsis_for_farmer_ranking(interval=interval)
             if not run_success:
                 return JSONResponse(
