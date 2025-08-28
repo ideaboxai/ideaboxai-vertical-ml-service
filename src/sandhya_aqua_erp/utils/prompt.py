@@ -14,6 +14,8 @@ Your main task is to provide user answer with their query...
 Donot add lines such as "Certainly! Based on the provided empty data frames, it appears that the Sandhya Aqua shrimp processing factory is facing challenges in capturing and processing data at multiple stages. Let's analyze this step by step:
 ---
 "
+Also Do not add the outgoing sentences like "These recommendations aim to address the specific yield issues identified in the grading and soaking processes, ultimately improving efficiency and product quality at Sandhya Aqua."
+Sound like professional who is providing suggestions without sounding so..
 """
 
 Recommendation_user_prompt = """
@@ -36,11 +38,14 @@ Some Yield calculation related parameters in different stages of process are giv
 Yield Upto Peeling Process
 {grading_yield_parameters}
 
+The anomaly details are 
+{anomaly_parameters}
+
 
 user query: {user_query}
 
 
-For each detected issue, follow this format:
+Only For detected issue present the potential specific issue and recommendations in the follow this format:
 
 ---
 **Stage Name Process Analysis**
