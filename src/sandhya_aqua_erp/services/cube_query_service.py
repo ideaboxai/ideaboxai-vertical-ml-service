@@ -37,22 +37,6 @@ class CubeService:
             if lot_filter:
                 query_dict["filters"].append(lot_filter)
                 
-                
-            # if lot_number:
-            #     lot_filter = {
-            #         "member": "RECOMMENDATION.plant_lot_number",
-            #         "operator": "equals",
-            #         "values": [lot_number],
-            #     }
-            #     query_dict["filters"].append(lot_filter)
-            
-            # if query_key == "anomaly_query":
-            #     query_dict["filters"].append({
-            #         "member": "ANOMALY_NUMBER.lot_number",
-            #         "operator": "equals",
-            #         "values": [lot_number]
-            #     })
-                
             query_str = json.dumps(query_dict)
             encoded_query = urllib.parse.quote(query_str)
             url = f"{self.base_url}{encoded_query}"

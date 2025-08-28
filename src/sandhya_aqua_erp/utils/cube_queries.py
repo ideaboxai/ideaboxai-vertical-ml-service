@@ -1,4 +1,4 @@
-CubeQueries = {
+LLMRecommendationCubeQueries = {
     "grn_process_query": """{
   "dimensions": [
     "RECOMMENDATION.plant_lot_number",

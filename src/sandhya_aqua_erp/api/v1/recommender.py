@@ -9,7 +9,6 @@ import asyncio
 
 app = APIRouter()
 
-# Redis client
 redis_client = redis.Redis(host="ml-service-redis", port=6379, decode_responses=True)
 # redis_client = redis.Redis(host="0.0.0.0", port=6379, decode_responses=True)
 
@@ -64,7 +63,6 @@ def ensure_sse_format(chunk: str) -> str:
 @app.post("/recommend")
 async def recommend(request: RequestModel):
     lot_number = request.lot_number
-    # sale_order = request.sale_order
 
     cache_key = f"recommend:{lot_number}"
     cached_data = redis_client.get(cache_key)
