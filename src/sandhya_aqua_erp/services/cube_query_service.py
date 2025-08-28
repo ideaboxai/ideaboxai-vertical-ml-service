@@ -3,7 +3,7 @@ import json
 import urllib.parse
 import httpx
 from dotenv import load_dotenv
-from src.sandhya_aqua_erp.utils.cube_queries import CubeQueries
+from src.sandhya_aqua_erp.utils.cube_queries import LLMRecommendationCubeQueries as CubeQueries
 
 load_dotenv()
 
