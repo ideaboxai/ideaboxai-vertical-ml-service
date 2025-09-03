@@ -1,5 +1,6 @@
 import pandas as pd
 from ..db_conn import get_sandhya_db_engine
+from typing import Optional
 
 
 class YieldRepository:
@@ -10,7 +11,13 @@ class YieldRepository:
     def __init__(self):
         self.engine = get_sandhya_db_engine()
 
-    def get_grn_grading_yield_data(self):
+    def get_grn_grading_yield_data(
+        self,
+        timestamp1: str,
+        timestamp2: Optional[str] = None,
+        interval: Optional[str] = None,
+        operator: str = None,
+    ):
         query = """
             WITH hl_cte AS (
                 SELECT
@@ -43,7 +50,6 @@ class YieldRepository:
                 0 AS indent_yield,
                 gi.quantity AS grn_quantity,
                 gi.count AS grn_count,
-                (gi.quantity / NULLIF(ii.expected_qty, 0)) * 100 AS grn_yield,
                 hc.grading_yield,
                 hc.grading_sale_orders,
                 hc.hl_weight,
@@ -62,17 +68,55 @@ class YieldRepository:
                 ON gi.grn_id = g.grn_id
             LEFT JOIN hl_cte hc
                 ON gi.grn_id = hc.grn_id
-                AND hc.lot_name = gi.plant_lot_number;
+                AND hc.lot_name = gi.plant_lot_number
         """
+        if interval and not timestamp1:
+            query += f" WHERE hc.grading_created_at >= DATE_SUB(CURDATE(), INTERVAL {interval})"
+        elif timestamp1 and not interval:
+            query += f" WHERE hc.grading_created_at > '{timestamp1}'"
+        elif interval and timestamp1:
+            raise ValueError(
+                "Specify only one of 'interval' or 'timestamp1', not both."
+            )
+        if timestamp2:
+            query += f" AND hc.grading_created_at < '{timestamp2}'"
+
+        if operator == "equals":
+            query += f" AND DATE(hc.grading_created_at) = DATE('{timestamp1}')"
+        elif operator == "notEquals":
+            query += f" AND DATE(hc.grading_created_at) != DATE('{timestamp1}')"
+        elif operator == "beforeDate":
+            query += f" AND DATE(hc.grading_created_at) < DATE('{timestamp1}')"
+        elif operator == "beforeOrOnDate":
+            query += f" AND DATE(hc.grading_created_at) <= DATE('{timestamp1}')"
+        elif operator == "afterDate":
+            query += f" AND DATE(hc.grading_created_at) > DATE('{timestamp1}')"
+        elif operator == "afterOrOnDate":
+            query += f" AND DATE(hc.grading_created_at) >= DATE('{timestamp1}')"
+        elif operator == "inDateRange" and timestamp2:
+            query += f" AND DATE(hc.grading_created_at) BETWEEN DATE('{timestamp1}') AND DATE('{timestamp2}')"
+        elif operator == "notInDateRange" and timestamp2:
+            query += f" AND DATE(hc.grading_created_at) NOT BETWEEN DATE('{timestamp1}') AND DATE('{timestamp2}')"
+        else:
+            raise ValueError(f"Invalid operator: {operator}")
+
         df = pd.read_sql(query, self.engine)
         return df
 
-    def get_soaking_yield_data(self):
+    def get_soaking_yield_data(
+        # self, interval: Optional[str] = None, exact_date_time: Optional[str] = None
+        self,
+        timestamp1: str,
+        timestamp2: Optional[str] = None,
+        interval: Optional[str] = None,
+        operator: str = None,
+    ) -> pd.DataFrame:
         query = """
                 WITH hl_cte AS (
                     SELECT
                         g.grn_id,
                         lot_name,
+                        p.created_at AS grading_created_at,
                         SUM(v.weight) - (p.crate_weight * COUNT(v.crates)) AS grading_net_weight,
                         g.quantity AS grn_quantity,
                         ((SUM(v.weight) - (p.crate_weight * COUNT(v.crates))) / g.quantity) * 100 AS grading_yield
@@ -185,13 +229,50 @@ class YieldRepository:
                     ON gd.lot_name = cd.lot_number
                     AND gd.grading_count = cd.cooking_count
             """
+        if interval and not timestamp1:
+            query += f" WHERE hc.grading_created_at >= DATE_SUB(CURDATE(), INTERVAL {interval})"
+        elif timestamp1 and not interval:
+            query += f" WHERE hc.grading_created_at > '{timestamp1}'"
+        elif interval and timestamp1:
+            raise ValueError(
+                "Specify only one of 'interval' or 'exact_date_time', not both."
+            )
+        if timestamp2:
+            query += f" AND hc.grading_created_at < '{timestamp2}'"
+        if operator == "equals":
+            query += f" AND DATE(hc.grading_created_at) = DATE('{timestamp1}')"
+        elif operator == "notEquals":
+            query += f" AND DATE(hc.grading_created_at) != DATE('{timestamp1}')"
+        elif operator == "beforeDate":
+            query += f" AND DATE(hc.grading_created_at) < DATE('{timestamp1}')"
+        elif operator == "beforeOrOnDate":
+            query += f" AND DATE(hc.grading_created_at) <= DATE('{timestamp1}')"
+        elif operator == "afterDate":
+            query += f" AND DATE(hc.grading_created_at) > DATE('{timestamp1}')"
+        elif operator == "afterOrOnDate":
+            query += f" AND DATE(hc.grading_created_at) >= DATE('{timestamp1}')"
+        elif operator == "inDateRange" and timestamp2:
+            query += f" AND DATE(hc.grading_created_at) BETWEEN DATE('{timestamp1}') AND DATE('{timestamp2}')"
+        elif operator == "notInDateRange" and timestamp2:
+            query += f" AND DATE(hc.grading_created_at) NOT BETWEEN DATE('{timestamp1}') AND DATE('{timestamp2}')"
+        else:
+            raise ValueError(f"Invalid operator: {operator}")
+
         df = pd.read_sql(query, self.engine)
         return df
 
-    def get_packing_yield_data(self):
+    def get_packing_yield_data(
+        # self, interval: Optional[str] = None, exact_date_time: Optional[str] = None
+        self,
+        timestamp1: str,
+        timestamp2: Optional[str] = None,
+        interval: Optional[str] = None,
+        operator: str = None,
+    ) -> pd.DataFrame:
         query = """
             SELECT
                 soak.unit_id,
+
                 soak.sale_order soak_sale_order,
                 pack.customer_po pack_sale_order,
                 soak.brand,
@@ -228,6 +309,7 @@ class YieldRepository:
                 SELECT
                     pa.unit_id,
                     pa.product_sku,
+                    pa.created_at AS packing_created_at,
                     Group_concat(DISTINCT Ifnull(
                                     NULLIF(Ltrim(pa.customer_po), '')
                                                         , 'DUMMY')
@@ -285,11 +367,36 @@ class YieldRepository:
                 soak.unit_id = pack.unit_id
                 -- and soak.sale_order = case when trim(pack.customer_po) ='' then 'DUMMY'  else pack.customer_po end
                 AND pack.product_sku = soak.sku
-            ORDER BY
-                1,
-                5,
-                2,
-                3
         """
+        if interval and not timestamp1:
+            query += f" WHERE pack.packing_created_at >= DATE_SUB(CURDATE(), INTERVAL {interval})"
+        elif timestamp1 and not interval:
+            query += f" WHERE pack.packing_created_at > '{timestamp1}'"
+        elif interval and timestamp1:
+            raise ValueError(
+                "Specify only one of 'interval' or 'exact_date_time', not both."
+            )
+        if timestamp2:
+            query += f" AND pack.packing_created_at < '{timestamp2}'"
+        if operator == "equals":
+            query += f" AND DATE(pack.packing_created_at) = DATE('{timestamp1}')"
+        elif operator == "notEquals":
+            query += f" AND DATE(pack.packing_created_at) != DATE('{timestamp1}')"
+        elif operator == "beforeDate":
+            query += f" AND DATE(pack.packing_created_at) < DATE('{timestamp1}')"
+        elif operator == "beforeOrOnDate":
+            query += f" AND DATE(pack.packing_created_at) <= DATE('{timestamp1}')"
+        elif operator == "afterDate":
+            query += f" AND DATE(pack.packing_created_at) > DATE('{timestamp1}')"
+        elif operator == "afterOrOnDate":
+            query += f" AND DATE(pack.packing_created_at) >= DATE('{timestamp1}')"
+        elif operator == "inDateRange" and timestamp2:
+            query += f" AND DATE(pack.packing_created_at) BETWEEN DATE('{timestamp1}') AND DATE('{timestamp2}')"
+        elif operator == "notInDateRange" and timestamp2:
+            query += f" AND DATE(pack.packing_created_at) NOT BETWEEN DATE('{timestamp1}') AND DATE('{timestamp2}')"
+        else:
+            raise ValueError(f"Invalid operator: {operator}")
+
+        query += " ORDER BY 1, 5, 2, 3"
         df = pd.read_sql(query, self.engine)
         return df

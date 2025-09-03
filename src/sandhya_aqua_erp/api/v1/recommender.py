@@ -1,0 +1,110 @@
+import json
+import redis
+from fastapi import APIRouter
+from fastapi.responses import StreamingResponse
+from src.sandhya_aqua_erp.services.llm_recommender_service import OpenAIRecommender
+from src.sandhya_aqua_erp.api.v1.schemas.recommender_schema import RequestModel
+from src.sandhya_aqua_erp.services.cube_query_service import CubeService
+import asyncio
+
+app = APIRouter()
+
+redis_client = redis.Redis(host="ml-service-redis", port=6379, decode_responses=True)
+# redis_client = redis.Redis(host="0.0.0.0", port=6379, decode_responses=True)
+
+
+async def fetch_process_parameters(lot_number: str):
+    cube_service = CubeService()
+    recommendation_lot_filter = {
+        "member": "RECOMMENDATION.plant_lot_number",
+        "operator": "equals",
+        "values": [lot_number],
+    }
+    anomaly_lot_filter = {
+        "member": "ANOMALY_NUMBER.lot_number",
+        "operator": "equals",
+        "values": [lot_number],
+    }
+    (
+        grn_process,
+        grading_process,
+        soaking_process,
+        cooking_process,
+        yield_process,
+        anomaly_data,
+    ) = await asyncio.gather(
+        cube_service.get_data("grn_process_query", lot_number,recommendation_lot_filter),
+        cube_service.get_data("grading_process_query", lot_number,recommendation_lot_filter),
+        cube_service.get_data("soaking_process_query", lot_number,recommendation_lot_filter),
+        cube_service.get_data("cooking_process_query", lot_number,recommendation_lot_filter),
+        cube_service.get_data("yield_calculation_query", lot_number,recommendation_lot_filter),
+        cube_service.get_data("anomaly_query", lot_number,anomaly_lot_filter),
+    )
+
+    parameters = {
+        "grn_process_parameters": grn_process,
+        "grading_process_parameters": grading_process,
+        "soaking_process_parameters": soaking_process,
+        "cooking_process_parameters": cooking_process,
+        "grading_yield_parameters": yield_process,
+        "anomaly_parameters": anomaly_data,
+    }
+
+    return parameters
+
+
+def ensure_sse_format(chunk: str) -> str:
+    """Ensure the chunk is SSE formatted."""
+    if not chunk.startswith("data:"):
+        return f"{chunk}"
+    return chunk
+
+
+@app.post("/recommend")
+async def recommend(request: RequestModel):
+    lot_number = request.lot_number
+
+    cache_key = f"recommend:{lot_number}"
+    cached_data = redis_client.get(cache_key)
+
+    mode = "normal"  # or "stream"
+    recommender = OpenAIRecommender(mode=mode)
+
+    if cached_data:
+        if mode == "stream":
+
+            async def replay_cached():
+                for chunk in json.loads(cached_data):
+                    yield ensure_sse_format(chunk)
+
+            return StreamingResponse(replay_cached(), media_type="text/event-stream")
+        else:
+            return {"recommendation": json.loads(cached_data)}
+
+    user_prompt = "Give Recommendation for the lot number"
+    chat_history = []
+    structured_input = f"User Query: {user_prompt}" if user_prompt else "User Query:"
+
+    parameters = await fetch_process_parameters(lot_number=lot_number)
+
+    if mode == "stream":
+        response_stream = await recommender.get_recommendation(
+            structured_input, chat_history, parameters=parameters
+        )
+
+        async def caching_stream():
+            buffer = []
+            async for chunk in response_stream:
+                formatted_chunk = ensure_sse_format(chunk)
+                buffer.append(formatted_chunk)
+                yield formatted_chunk
+            redis_client.setex(cache_key, 24 * 60 * 60, json.dumps(buffer))
+
+        return StreamingResponse(caching_stream(), media_type="text/event-stream")
+
+    else:
+        result = await recommender.get_recommendation(
+            structured_input, chat_history, parameters=parameters
+        )
+        redis_client.setex(cache_key, 24 * 60 * 60, json.dumps(result))
+        return {"recommendation": result}

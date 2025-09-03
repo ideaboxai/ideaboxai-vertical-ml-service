@@ -35,6 +35,11 @@ dvc pull
 pre-commit install
 ```
 
+**5. Running FastAPI app**
+```bash
+python app.py
+```
+
 ## 📦 Dependency Management
 We use uv for fast, reproducible installs.
 - Prod only: `uv sync`
