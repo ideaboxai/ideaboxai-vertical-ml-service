@@ -1,46 +1,55 @@
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, status
 from fastapi.responses import JSONResponse
 import numpy as np
-from enum import Enum
-from typing import List, Optional
 from src.sandhya_aqua_erp.utils.param_input_validator import param_input_validator
 from src.sandhya_aqua_erp.repositories.yield_repo import YieldRepository
+import ast
 
 from src.sandhya_aqua_erp.anomaly_detection.supply_chain.pipeline.predict.predict_cross_stage import (
     predict,
+)
+from src.sandhya_aqua_erp.api.v1.schemas.anomaly_detection_schema import (
+    AlertProcessing,
+    AlertStage,
 )
 
 router = APIRouter()
 
 
-class CrossStageName(str, Enum):
-    GRN_GRADING = "grn_grading_yield_data"
-    SOAKING = "soaking_yield_data"
-    PACKING = "packing_yield_data"
-
-
 @router.get("/yield-data")
 async def get_anomaly(
-    interval: str = "1 DAY",
-    exact_date_time: str = None,
-    cross_stage_names: Optional[List[CrossStageName]] = Query(
-        default=["grn_grading_yield_data", "soaking_yield_data", "packing_yield_data"],
-        description="List of cross stage names to filter the yield data",
-    ),
+    # interval: str = "1 DAY",
+    # exact_date_time: str = None,
+    # cross_stage_names: Optional[List[CrossStageName]] = Query(
+    #     default=["grn_grading_yield_data", "soaking_yield_data", "packing_yield_data"],
+    #     description="List of cross stage names to filter the yield data",
+    # ),
+    params: AlertProcessing = Query(...),
 ):
     """
     Endpoint to trigger yield anomaly detection.
     """
     # Validate input parameters
     try:
-        param_input_validator(interval)
-        if exact_date_time:
-            param_input_validator(exact_date_time)
-        if cross_stage_names:
-            for stage in cross_stage_names:
-                param_input_validator(
-                    stage.value if isinstance(stage, CrossStageName) else stage
-                )
+        print("Received params:", params)
+        print("Received alert stage:", params.alert_stage)
+
+        # Ensure timestamps is always a list
+        timestamps = params.timestamps
+        if not isinstance(timestamps, list):
+            timestamps = ast.literal_eval(timestamps)
+        else:
+            raise ValueError("Timestamps must be a string or a list of strings.")
+
+        timestamp1 = timestamps[0]
+        timestamp2 = timestamps[1] if len(timestamps) > 1 else None
+
+        print("Received timestamps:", timestamps)
+        print("Received operator:", params.operator)
+
+        param_input_validator(timestamp1)
+        if timestamp2:
+            param_input_validator(timestamp2)
 
         yield_repo = YieldRepository()
 
@@ -52,19 +61,21 @@ async def get_anomaly(
 
         selected_stages = (
             [
-                stage.value if isinstance(stage, CrossStageName) else stage
-                for stage in cross_stage_names
+                stage.value if isinstance(stage, AlertStage) else stage
+                for stage in params.alert_stage
             ]
-            if cross_stage_names is not None
+            if params.alert_stage is not None
             else list(stage_method_map.keys())
         )
 
         yield_data_mapper = {
             stage: stage_method_map[stage](
-                interval=interval, exact_date_time=exact_date_time
+                timestamp1=timestamp1,
+                timestamp2=timestamp2,
+                interval=None,
+                operator=params.operator,
             )
             for stage in selected_stages
-            if stage in stage_method_map
         }
 
         response = {}
@@ -88,7 +99,8 @@ async def get_anomaly(
                 f"Processed {cross_stage_name} with {len(response[cross_stage_name])} records."
             )
 
-        return JSONResponse(content=response)
+        return JSONResponse(status_code=status.HTTP_200_OK, content=response)
+
     except ValueError as ve:
         return JSONResponse(
             status_code=400, content={"error": f"Invalid input parameter: {str(ve)}"}
