@@ -30,9 +30,15 @@ def run_yield_anomaly_detection():
     yield_repo = YieldRepository()
 
     yield_data_mapper = {
-        "grn_grading_yield_data": yield_repo.get_grn_grading_yield_data(),
-        "soaking_yield_data": yield_repo.get_soaking_yield_data(),
-        "packing_yield_data": yield_repo.get_packing_yield_data(),
+        "grn_grading_yield_data": yield_repo.get_grn_grading_yield_data(
+            timestamp1="2025-06-01", operator="afterOrOnDate"
+        ),
+        "soaking_yield_data": yield_repo.get_soaking_yield_data(
+            timestamp1="2025-06-01", operator="afterOrOnDate"
+        ),
+        "packing_yield_data": yield_repo.get_packing_yield_data(
+            timestamp1="2025-06-01", operator="afterOrOnDate"
+        ),
     }
 
     yield_statistical_thresholds = []
