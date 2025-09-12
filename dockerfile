@@ -28,8 +28,8 @@ RUN uv pip install --system .
 RUN pip install --no-cache-dir "dvc[s3]"
 
 # Run the two inference scripts once at build time
-RUN python src/sandhya_aqua_erp/anomaly_detection/supply_chain/pipeline/infer/infer_feature_wise_stats.py \
- && python src/sandhya_aqua_erp/anomaly_detection/supply_chain/pipeline/infer/infer_cross_stage_yield_stats.py
+# RUN python src/sandhya_aqua_erp/anomaly_detection/supply_chain/pipeline/infer/infer_feature_wise_stats.py \
+#  && python src/sandhya_aqua_erp/anomaly_detection/supply_chain/pipeline/infer/infer_cross_stage_yield_stats.py
 
 # Set environment variables
 ENV PYTHONPATH=/app
