@@ -1,3 +1,10 @@
+"""
+Running this script will generate statistical thresholds for yield anomaly detection
+across various supply chain stages and save the results to a JSON file.
+To execute the script, use the command:
+python src/sandhya_aqua_erp/anomaly_detection/supply_chain/pipeline/infer/infer_cross_stage_yield_stats.py
+"""
+
 import json
 import sys
 import os
@@ -39,6 +46,9 @@ def run_yield_anomaly_detection():
         "packing_yield_data": yield_repo.get_packing_yield_data(
             timestamp1="2025-06-01", operator="afterOrOnDate"
         ),
+        "cooking_yield_data": yield_repo.get_cooking_yield_data(
+            timestamp1="2025-06-01", operator="afterOrOnDate"
+        ),
     }
 
     yield_statistical_thresholds = []
@@ -75,6 +85,7 @@ def run_yield_anomaly_detection():
                     "name": strategy_name,
                     "params": strategy_params,
                     "thresholds": None,
+                    "stat_values": None,
                 }
 
                 logger.info(
@@ -86,9 +97,10 @@ def run_yield_anomaly_detection():
                 )
                 model_trainer = ModelTrainer(model_trainer_config)
 
-                thresholds = model_trainer.train(feature_data)
+                thresholds, stat_values = model_trainer.train(feature_data)
 
                 strategy_stats["thresholds"] = thresholds
+                strategy_stats["stat_values"] = stat_values
                 feature_stats["strategies"].append(strategy_stats)
 
             cross_stage_stats["features"].append(feature_stats)

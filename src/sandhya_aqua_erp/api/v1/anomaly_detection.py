@@ -18,18 +18,11 @@ router = APIRouter()
 
 @router.get("/yield-data")
 async def get_anomaly(
-    # interval: str = "1 DAY",
-    # exact_date_time: str = None,
-    # cross_stage_names: Optional[List[CrossStageName]] = Query(
-    #     default=["grn_grading_yield_data", "soaking_yield_data", "packing_yield_data"],
-    #     description="List of cross stage names to filter the yield data",
-    # ),
     params: AlertProcessing = Query(...),
 ):
     """
     Endpoint to trigger yield anomaly detection.
     """
-    # Validate input parameters
     try:
         print("Received params:", params)
         print("Received alert stage:", params.alert_stage)
@@ -57,6 +50,7 @@ async def get_anomaly(
             "grn_grading_yield_data": yield_repo.get_grn_grading_yield_data,
             "soaking_yield_data": yield_repo.get_soaking_yield_data,
             "packing_yield_data": yield_repo.get_packing_yield_data,
+            "cooking_yield_data": yield_repo.get_cooking_yield_data,
         }
 
         selected_stages = (
@@ -82,8 +76,10 @@ async def get_anomaly(
 
         for cross_stage_name, queried_data in yield_data_mapper.items():
             df = queried_data
-            predictions = predict(cross_stage_name=cross_stage_name, data=df)
 
+            predictions, feature_info = predict(
+                cross_stage_name=cross_stage_name, data=df
+            )
             for col in predictions.columns:
                 if predictions[
                     col
@@ -93,10 +89,11 @@ async def get_anomaly(
                     predictions[col] = predictions[col].astype(str)
 
             predictions = predictions.replace([np.nan, np.inf, -np.inf], None)
-
-            response[cross_stage_name] = predictions.to_dict(orient="records")
+            response[cross_stage_name] = {}
+            response[cross_stage_name]["feature_info"] = feature_info
+            response[cross_stage_name]["data"] = predictions.to_dict(orient="records")
             print(
-                f"Processed {cross_stage_name} with {len(response[cross_stage_name])} records."
+                f"Processed {cross_stage_name} with {len(response[cross_stage_name]['data'])} records."
             )
 
         return JSONResponse(status_code=status.HTTP_200_OK, content=response)
