@@ -123,20 +123,9 @@ def run_yield_anomaly_detection():
     }
 
     output_file = "models/sandhya_aqua_erp/yield_statistical_thresholds.json"
-    output_dir = os.path.dirname(output_file)
-    if output_dir and not os.path.exists(output_dir):
-        os.makedirs(output_dir, exist_ok=True)
+    os.makedirs(os.path.dirname(output_file), exist_ok=True)
     with open(output_file, "w") as f:
         json.dump(output, f, indent=4)
 
 
-if __name__ == "__main__":
-    try:
-        run_yield_anomaly_detection()
-        logger.info("Script completed successfully")
-    except Exception as e:
-        logger.error(f"Script failed with error: {e}")
-        import traceback
-
-        logger.error(f"Traceback: {traceback.format_exc()}")
-        sys.exit(1)
+run_yield_anomaly_detection()
