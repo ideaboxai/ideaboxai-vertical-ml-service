@@ -7,8 +7,8 @@ load_dotenv()
 
 class CubeJSClient:
     def __init__(self, token: str = None, base_url: str = None):
-        self.base_url = base_url or os.getenv("CUBE_BASE_URL")
-        self.access_token = token or os.getenv("CUBE_TOKEN")
+        self.base_url = base_url or os.getenv("CUBEJS_BASE_URL")
+        self.access_token = token or os.getenv("CUBEJS_TOKEN")
 
     def get_base_url(self) -> str:
         return self.base_url
