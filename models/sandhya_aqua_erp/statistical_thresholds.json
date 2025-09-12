@@ -1,0 +1,1811 @@
+{
+    "metadata": {
+        "generated_at": "2025-09-12T18:06:40.310872",
+        "description": "Feature statistics for anomaly detection",
+        "version": "1.0.0",
+        "total_tables": 14,
+        "total_features": 39
+    },
+    "data": [
+        {
+            "database_name": "erpx_dev_rm_procurement",
+            "table_name": "grn_items",
+            "features": [
+                {
+                    "name": "quantity",
+                    "strategies": [
+                        {
+                            "name": "iqr",
+                            "params": {
+                                "iqr_multiplier": 1.5,
+                                "is_non_negative_feature": true
+                            },
+                            "thresholds": [
+                                {
+                                    "lower_bound": 0,
+                                    "upper_bound": 8553.875
+                                },
+                                {
+                                    "q1": 1387.0,
+                                    "q2": 2444.5,
+                                    "q3": 4253.75,
+                                    "iqr": 2866.75,
+                                    "minimum": 0,
+                                    "maximum": 8553.875
+                                }
+                            ]
+                        },
+                        {
+                            "name": "mad",
+                            "params": {
+                                "mad_multiplier": 3.5,
+                                "is_non_negative_feature": true
+                            },
+                            "thresholds": [
+                                {
+                                    "lower_bound": 0,
+                                    "upper_bound": 7003.25
+                                },
+                                {
+                                    "median": 2444.5,
+                                    "mad": 1302.5,
+                                    "z_max_threshold": 3.5
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "name": "count",
+                    "strategies": [
+                        {
+                            "name": "iqr",
+                            "params": {
+                                "iqr_multiplier": 1.5,
+                                "is_non_negative_feature": true
+                            },
+                            "thresholds": [
+                                {
+                                    "lower_bound": 0,
+                                    "upper_bound": 121.0
+                                },
+                                {
+                                    "q1": 24.75,
+                                    "q2": 45.0,
+                                    "q3": 63.25,
+                                    "iqr": 38.5,
+                                    "minimum": 0,
+                                    "maximum": 121.0
+                                }
+                            ]
+                        },
+                        {
+                            "name": "mad",
+                            "params": {
+                                "mad_multiplier": 3.5,
+                                "is_non_negative_feature": true
+                            },
+                            "thresholds": [
+                                {
+                                    "lower_bound": 0,
+                                    "upper_bound": 115.0
+                                },
+                                {
+                                    "median": 45.0,
+                                    "mad": 20.0,
+                                    "z_max_threshold": 3.5
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "name": "received_boxes",
+                    "strategies": [
+                        {
+                            "name": "iqr",
+                            "params": {
+                                "iqr_multiplier": 1.5,
+                                "is_non_negative_feature": true
+                            },
+                            "thresholds": [
+                                {
+                                    "lower_bound": 0,
+                                    "upper_bound": 294.625
+                                },
+                                {
+                                    "q1": 49.0,
+                                    "q2": 85.0,
+                                    "q3": 147.25,
+                                    "iqr": 98.25,
+                                    "minimum": 0,
+                                    "maximum": 294.625
+                                }
+                            ]
+                        },
+                        {
+                            "name": "mad",
+                            "params": {
+                                "mad_multiplier": 3.5,
+                                "is_non_negative_feature": true
+                            },
+                            "thresholds": [
+                                {
+                                    "lower_bound": 0,
+                                    "upper_bound": 239.0
+                                },
+                                {
+                                    "median": 85.0,
+                                    "mad": 44.0,
+                                    "z_max_threshold": 3.5
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "name": "soft_percentage",
+                    "strategies": [
+                        {
+                            "name": "iqr",
+                            "params": {
+                                "iqr_multiplier": 1.5,
+                                "is_non_negative_feature": true
+                            },
+                            "thresholds": [
+                                {
+                                    "lower_bound": 0,
+                                    "upper_bound": 0.0
+                                },
+                                {
+                                    "q1": 0.0,
+                                    "q2": 0.0,
+                                    "q3": 0.0,
+                                    "iqr": 0.0,
+                                    "minimum": 0,
+                                    "maximum": 0.0
+                                }
+                            ]
+                        },
+                        {
+                            "name": "mad",
+                            "params": {
+                                "mad_multiplier": 3.5,
+                                "is_non_negative_feature": true
+                            },
+                            "thresholds": [
+                                {
+                                    "lower_bound": 0,
+                                    "upper_bound": 0.0
+                                },
+                                {
+                                    "median": 0.0,
+                                    "mad": 0.0,
+                                    "z_max_threshold": 3.5
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "name": "boxes",
+                    "strategies": [
+                        {
+                            "name": "iqr",
+                            "params": {
+                                "iqr_multiplier": 1.5,
+                                "is_non_negative_feature": true
+                            },
+                            "thresholds": [
+                                {
+                                    "lower_bound": 0,
+                                    "upper_bound": 294.625
+                                },
+                                {
+                                    "q1": 49.0,
+                                    "q2": 85.0,
+                                    "q3": 147.25,
+                                    "iqr": 98.25,
+                                    "minimum": 0,
+                                    "maximum": 294.625
+                                }
+                            ]
+                        },
+                        {
+                            "name": "mad",
+                            "params": {
+                                "mad_multiplier": 3.5,
+                                "is_non_negative_feature": true
+                            },
+                            "thresholds": [
+                                {
+                                    "lower_bound": 0,
+                                    "upper_bound": 239.0
+                                },
+                                {
+                                    "median": 85.0,
+                                    "mad": 44.0,
+                                    "z_max_threshold": 3.5
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "name": "antibiotic_test",
+                    "strategies": [
+                        {
+                            "name": "iqr",
+                            "params": {
+                                "iqr_multiplier": 1.5,
+                                "is_non_negative_feature": true
+                            },
+                            "thresholds": [
+                                {
+                                    "lower_bound": 0,
+                                    "upper_bound": 0.0
+                                },
+                                {
+                                    "q1": 0.0,
+                                    "q2": 0.0,
+                                    "q3": 0.0,
+                                    "iqr": 0.0,
+                                    "minimum": 0,
+                                    "maximum": 0.0
+                                }
+                            ]
+                        },
+                        {
+                            "name": "mad",
+                            "params": {
+                                "mad_multiplier": 3.5,
+                                "is_non_negative_feature": true
+                            },
+                            "thresholds": [
+                                {
+                                    "lower_bound": 0,
+                                    "upper_bound": 0.0
+                                },
+                                {
+                                    "median": 0.0,
+                                    "mad": 0.0,
+                                    "z_max_threshold": 3.5
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "name": "fungus_percentage",
+                    "strategies": [
+                        {
+                            "name": "iqr",
+                            "params": {
+                                "iqr_multiplier": 1.5,
+                                "is_non_negative_feature": true
+                            },
+                            "thresholds": [
+                                {
+                                    "lower_bound": 0,
+                                    "upper_bound": 0.0
+                                },
+                                {
+                                    "q1": 0.0,
+                                    "q2": 0.0,
+                                    "q3": 0.0,
+                                    "iqr": 0.0,
+                                    "minimum": 0,
+                                    "maximum": 0.0
+                                }
+                            ]
+                        },
+                        {
+                            "name": "mad",
+                            "params": {
+                                "mad_multiplier": 3.5,
+                                "is_non_negative_feature": true
+                            },
+                            "thresholds": [
+                                {
+                                    "lower_bound": 0,
+                                    "upper_bound": 0.0
+                                },
+                                {
+                                    "median": 0.0,
+                                    "mad": 0.0,
+                                    "z_max_threshold": 3.5
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "database_name": "erpx_dev_production",
+            "table_name": "pp_grading",
+            "features": [
+                {
+                    "name": "crate_weight",
+                    "strategies": [
+                        {
+                            "name": "iqr",
+                            "params": {
+                                "iqr_multiplier": 1.5,
+                                "is_non_negative_feature": true
+                            },
+                            "thresholds": [
+                                {
+                                    "lower_bound": 0.7500000000000002,
+                                    "upper_bound": 4.35
+                                },
+                                {
+                                    "q1": 2.1,
+                                    "q2": 2.2,
+                                    "q3": 3.0,
+                                    "iqr": 0.8999999999999999,
+                                    "minimum": 0.7500000000000002,
+                                    "maximum": 4.35
+                                }
+                            ]
+                        },
+                        {
+                            "name": "mad",
+                            "params": {
+                                "mad_multiplier": 3.5,
+                                "is_non_negative_feature": true
+                            },
+                            "thresholds": [
+                                {
+                                    "lower_bound": 1.4999999999999996,
+                                    "upper_bound": 2.900000000000001
+                                },
+                                {
+                                    "median": 2.2,
+                                    "mad": 0.20000000000000018,
+                                    "z_max_threshold": 3.5
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "database_name": "erpx_dev_production",
+            "table_name": "pp_grading_grades",
+            "features": [
+                {
+                    "name": "count",
+                    "strategies": [
+                        {
+                            "name": "iqr",
+                            "params": {
+                                "iqr_multiplier": 1.5,
+                                "is_non_negative_feature": true
+                            },
+                            "thresholds": [
+                                {
+                                    "lower_bound": 0,
+                                    "upper_bound": 93.5
+                                },
+                                {
+                                    "q1": 21.0,
+                                    "q2": 33.0,
+                                    "q3": 50.0,
+                                    "iqr": 29.0,
+                                    "minimum": 0,
+                                    "maximum": 93.5
+                                }
+                            ]
+                        },
+                        {
+                            "name": "mad",
+                            "params": {
+                                "mad_multiplier": 3.5,
+                                "is_non_negative_feature": true
+                            },
+                            "thresholds": [
+                                {
+                                    "lower_bound": 0,
+                                    "upper_bound": 82.0
+                                },
+                                {
+                                    "median": 33.0,
+                                    "mad": 14.0,
+                                    "z_max_threshold": 3.5
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "name": "uniformity_ratio",
+                    "strategies": [
+                        {
+                            "name": "iqr",
+                            "params": {
+                                "iqr_multiplier": 1.5,
+                                "is_non_negative_feature": true
+                            },
+                            "thresholds": [
+                                {
+                                    "lower_bound": 1.0749999999999997,
+                                    "upper_bound": 1.435
+                                },
+                                {
+                                    "q1": 1.21,
+                                    "q2": 1.29,
+                                    "q3": 1.3,
+                                    "iqr": 0.09000000000000008,
+                                    "minimum": 1.0749999999999997,
+                                    "maximum": 1.435
+                                }
+                            ]
+                        },
+                        {
+                            "name": "mad",
+                            "params": {
+                                "mad_multiplier": 3.5,
+                                "is_non_negative_feature": true
+                            },
+                            "thresholds": [
+                                {
+                                    "lower_bound": 1.15,
+                                    "upper_bound": 1.4300000000000002
+                                },
+                                {
+                                    "median": 1.29,
+                                    "mad": 0.040000000000000036,
+                                    "z_max_threshold": 3.5
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "database_name": "erpx_dev_production",
+            "table_name": "pp_grading_readings",
+            "features": [
+                {
+                    "name": "count",
+                    "strategies": [
+                        {
+                            "name": "iqr",
+                            "params": {
+                                "iqr_multiplier": 1.5,
+                                "is_non_negative_feature": true
+                            },
+                            "thresholds": [
+                                {
+                                    "lower_bound": 0,
+                                    "upper_bound": 79.0
+                                },
+                                {
+                                    "q1": 19.0,
+                                    "q2": 29.0,
+                                    "q3": 43.0,
+                                    "iqr": 24.0,
+                                    "minimum": 0,
+                                    "maximum": 79.0
+                                }
+                            ]
+                        },
+                        {
+                            "name": "mad",
+                            "params": {
+                                "mad_multiplier": 3.5,
+                                "is_non_negative_feature": true
+                            },
+                            "thresholds": [
+                                {
+                                    "lower_bound": 0,
+                                    "upper_bound": 67.5
+                                },
+                                {
+                                    "median": 29.0,
+                                    "mad": 11.0,
+                                    "z_max_threshold": 3.5
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "name": "weight",
+                    "strategies": [
+                        {
+                            "name": "iqr",
+                            "params": {
+                                "iqr_multiplier": 1.5,
+                                "is_non_negative_feature": true
+                            },
+                            "thresholds": [
+                                {
+                                    "lower_bound": 34.16999817,
+                                    "upper_bound": 39.05000305
+                                },
+                                {
+                                    "q1": 36.0,
+                                    "q2": 36.04000092,
+                                    "q3": 37.22000122,
+                                    "iqr": 1.2200012200000003,
+                                    "minimum": 34.16999817,
+                                    "maximum": 39.05000305
+                                }
+                            ]
+                        },
+                        {
+                            "name": "mad",
+                            "params": {
+                                "mad_multiplier": 3.5,
+                                "is_non_negative_feature": true
+                            },
+                            "thresholds": [
+                                {
+                                    "lower_bound": 31.98000147999998,
+                                    "upper_bound": 40.10000036000001
+                                },
+                                {
+                                    "median": 36.04000092,
+                                    "mad": 1.1599998400000047,
+                                    "z_max_threshold": 3.5
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "name": "crates",
+                    "strategies": [
+                        {
+                            "name": "iqr",
+                            "params": {
+                                "iqr_multiplier": 1.5,
+                                "is_non_negative_feature": true
+                            },
+                            "thresholds": [
+                                {
+                                    "lower_bound": 0,
+                                    "upper_bound": 3.5
+                                },
+                                {
+                                    "q1": 1.0,
+                                    "q2": 1.0,
+                                    "q3": 2.0,
+                                    "iqr": 1.0,
+                                    "minimum": 0,
+                                    "maximum": 3.5
+                                }
+                            ]
+                        },
+                        {
+                            "name": "z_score",
+                            "params": {
+                                "z_max_threshold": 3.0,
+                                "is_non_negative_feature": true
+                            },
+                            "thresholds": [
+                                {
+                                    "lower_bound": 0,
+                                    "upper_bound": 6.885844728984381
+                                },
+                                {
+                                    "mean": 1.5056536218720793,
+                                    "std": 1.7933970357041007,
+                                    "z_max_threshold": 3.0
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "database_name": "erpx_dev_production",
+            "table_name": "pp_soaking_lot",
+            "features": [
+                {
+                    "name": "count",
+                    "strategies": [
+                        {
+                            "name": "iqr",
+                            "params": {
+                                "iqr_multiplier": 1.5,
+                                "is_non_negative_feature": true
+                            },
+                            "thresholds": [
+                                {
+                                    "lower_bound": 0,
+                                    "upper_bound": 71.5
+                                },
+                                {
+                                    "q1": 19.0,
+                                    "q2": 28.0,
+                                    "q3": 40.0,
+                                    "iqr": 21.0,
+                                    "minimum": 0,
+                                    "maximum": 71.5
+                                }
+                            ]
+                        },
+                        {
+                            "name": "mad",
+                            "params": {
+                                "mad_multiplier": 3.5,
+                                "is_non_negative_feature": true
+                            },
+                            "thresholds": [
+                                {
+                                    "lower_bound": 0,
+                                    "upper_bound": 63.0
+                                },
+                                {
+                                    "median": 28.0,
+                                    "mad": 10.0,
+                                    "z_max_threshold": 3.5
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "database_name": "erpx_dev_production",
+            "table_name": "pp_soaking",
+            "features": [
+                {
+                    "name": "soak_time",
+                    "strategies": [
+                        {
+                            "name": "iqr",
+                            "params": {
+                                "iqr_multiplier": 1.5,
+                                "is_non_negative_feature": true
+                            },
+                            "thresholds": [
+                                {
+                                    "lower_bound": 30.0,
+                                    "upper_bound": 270.0
+                                },
+                                {
+                                    "q1": 120.0,
+                                    "q2": 180.0,
+                                    "q3": 180.0,
+                                    "iqr": 60.0,
+                                    "minimum": 30.0,
+                                    "maximum": 270.0
+                                }
+                            ]
+                        },
+                        {
+                            "name": "mad",
+                            "params": {
+                                "mad_multiplier": 3.5,
+                                "is_non_negative_feature": true
+                            },
+                            "thresholds": [
+                                {
+                                    "lower_bound": 180.0,
+                                    "upper_bound": 180.0
+                                },
+                                {
+                                    "median": 180.0,
+                                    "mad": 0.0,
+                                    "z_max_threshold": 3.5
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "name": "crate_weight",
+                    "strategies": [
+                        {
+                            "name": "iqr",
+                            "params": {
+                                "iqr_multiplier": 1.5,
+                                "is_non_negative_feature": true
+                            },
+                            "thresholds": [
+                                {
+                                    "lower_bound": 1.6999999999999997,
+                                    "upper_bound": 2.5000000000000004
+                                },
+                                {
+                                    "q1": 2.0,
+                                    "q2": 2.2,
+                                    "q3": 2.2,
+                                    "iqr": 0.20000000000000018,
+                                    "minimum": 1.6999999999999997,
+                                    "maximum": 2.5000000000000004
+                                }
+                            ]
+                        },
+                        {
+                            "name": "mad",
+                            "params": {
+                                "mad_multiplier": 3.5,
+                                "is_non_negative_feature": true
+                            },
+                            "thresholds": [
+                                {
+                                    "lower_bound": 2.2,
+                                    "upper_bound": 2.2
+                                },
+                                {
+                                    "median": 2.2,
+                                    "mad": 0.0,
+                                    "z_max_threshold": 3.5
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "name": "soakin_count",
+                    "strategies": [
+                        {
+                            "name": "iqr",
+                            "params": {
+                                "iqr_multiplier": 1.5,
+                                "is_non_negative_feature": true
+                            },
+                            "thresholds": [
+                                {
+                                    "lower_bound": 0,
+                                    "upper_bound": 82.5
+                                },
+                                {
+                                    "q1": 20.0,
+                                    "q2": 31.0,
+                                    "q3": 45.0,
+                                    "iqr": 25.0,
+                                    "minimum": 0,
+                                    "maximum": 82.5
+                                }
+                            ]
+                        },
+                        {
+                            "name": "mad",
+                            "params": {
+                                "mad_multiplier": 3.5,
+                                "is_non_negative_feature": true
+                            },
+                            "thresholds": [
+                                {
+                                    "lower_bound": 0,
+                                    "upper_bound": 76.5
+                                },
+                                {
+                                    "median": 31.0,
+                                    "mad": 13.0,
+                                    "z_max_threshold": 3.5
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "name": "actual_soaking_time_in_minutes",
+                    "strategies": [
+                        {
+                            "name": "iqr",
+                            "params": {
+                                "iqr_multiplier": 1.5,
+                                "is_non_negative_feature": true
+                            },
+                            "thresholds": [
+                                {
+                                    "lower_bound": 0,
+                                    "upper_bound": 394.4375
+                                },
+                                {
+                                    "q1": 130.20833333333331,
+                                    "q2": 180.46666666666667,
+                                    "q3": 235.9,
+                                    "iqr": 105.69166666666669,
+                                    "minimum": 0,
+                                    "maximum": 394.4375
+                                }
+                            ]
+                        },
+                        {
+                            "name": "mad",
+                            "params": {
+                                "mad_multiplier": 3.5,
+                                "is_non_negative_feature": true
+                            },
+                            "thresholds": [
+                                {
+                                    "lower_bound": 0,
+                                    "upper_bound": 364.1
+                                },
+                                {
+                                    "median": 180.46666666666667,
+                                    "mad": 52.46666666666667,
+                                    "z_max_threshold": 3.5
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "database_name": "erpx_dev_production",
+            "table_name": "pp_soaking_readings",
+            "features": [
+                {
+                    "name": "weight",
+                    "strategies": [
+                        {
+                            "name": "iqr",
+                            "params": {
+                                "iqr_multiplier": 1.5,
+                                "is_non_negative_feature": true
+                            },
+                            "thresholds": [
+                                {
+                                    "lower_bound": 85.93501659999994,
+                                    "upper_bound": 206.93498620000003
+                                },
+                                {
+                                    "q1": 131.31000519999998,
+                                    "q2": 160.7400055,
+                                    "q3": 161.5599976,
+                                    "iqr": 30.249992400000025,
+                                    "minimum": 85.93501659999994,
+                                    "maximum": 206.93498620000003
+                                }
+                            ]
+                        },
+                        {
+                            "name": "mad",
+                            "params": {
+                                "mad_multiplier": 3.5,
+                                "is_non_negative_feature": true
+                            },
+                            "thresholds": [
+                                {
+                                    "lower_bound": 157.31002054999993,
+                                    "upper_bound": 164.16999045000006
+                                },
+                                {
+                                    "median": 160.7400055,
+                                    "mad": 0.9799957000000177,
+                                    "z_max_threshold": 3.5
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "name": "crates",
+                    "strategies": [
+                        {
+                            "name": "iqr",
+                            "params": {
+                                "iqr_multiplier": 1.5,
+                                "is_non_negative_feature": true
+                            },
+                            "thresholds": [
+                                {
+                                    "lower_bound": 2.5,
+                                    "upper_bound": 6.5
+                                },
+                                {
+                                    "q1": 4.0,
+                                    "q2": 5.0,
+                                    "q3": 5.0,
+                                    "iqr": 1.0,
+                                    "minimum": 2.5,
+                                    "maximum": 6.5
+                                }
+                            ]
+                        },
+                        {
+                            "name": "z_score",
+                            "params": {
+                                "z_max_threshold": 3.0,
+                                "is_non_negative_feature": true
+                            },
+                            "thresholds": [
+                                {
+                                    "lower_bound": 0.8957056373098702,
+                                    "upper_bound": 7.944278146786962
+                                },
+                                {
+                                    "mean": 4.419991892048416,
+                                    "std": 1.1747620849128486,
+                                    "z_max_threshold": 3.0
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "database_name": "erpx_dev_production",
+            "table_name": "pp_soaking_temperature",
+            "features": [
+                {
+                    "name": "temperature",
+                    "strategies": [
+                        {
+                            "name": "iqr",
+                            "params": {
+                                "iqr_multiplier": 1.5,
+                                "is_non_negative_feature": true
+                            },
+                            "thresholds": [
+                                {
+                                    "lower_bound": 0,
+                                    "upper_bound": 8.526818752
+                                },
+                                {
+                                    "q1": 2.786462307,
+                                    "q2": 3.857202053,
+                                    "q3": 5.082604885,
+                                    "iqr": 2.2961425780000004,
+                                    "minimum": 0,
+                                    "maximum": 8.526818752
+                                }
+                            ]
+                        },
+                        {
+                            "name": "mad",
+                            "params": {
+                                "mad_multiplier": 3.5,
+                                "is_non_negative_feature": true
+                            },
+                            "thresholds": [
+                                {
+                                    "lower_bound": 0,
+                                    "upper_bound": 7.8598570835
+                                },
+                                {
+                                    "median": 3.857202053,
+                                    "mad": 1.143615723,
+                                    "z_max_threshold": 3.5
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "database_name": "erpx_dev_production",
+            "table_name": "pp_cooking_lot",
+            "features": [
+                {
+                    "name": "count",
+                    "strategies": [
+                        {
+                            "name": "iqr",
+                            "params": {
+                                "iqr_multiplier": 1.5,
+                                "is_non_negative_feature": true
+                            },
+                            "thresholds": [
+                                {
+                                    "lower_bound": 0,
+                                    "upper_bound": 81.5
+                                },
+                                {
+                                    "q1": 19.0,
+                                    "q2": 30.0,
+                                    "q3": 44.0,
+                                    "iqr": 25.0,
+                                    "minimum": 0,
+                                    "maximum": 81.5
+                                }
+                            ]
+                        },
+                        {
+                            "name": "mad",
+                            "params": {
+                                "mad_multiplier": 3.5,
+                                "is_non_negative_feature": true
+                            },
+                            "thresholds": [
+                                {
+                                    "lower_bound": 0,
+                                    "upper_bound": 72.0
+                                },
+                                {
+                                    "median": 30.0,
+                                    "mad": 12.0,
+                                    "z_max_threshold": 3.5
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "database_name": "erpx_dev_production",
+            "table_name": "pp_cooking",
+            "features": [
+                {
+                    "name": "cooking_temp",
+                    "strategies": [
+                        {
+                            "name": "iqr",
+                            "params": {
+                                "iqr_multiplier": 1.5,
+                                "is_non_negative_feature": true
+                            },
+                            "thresholds": [
+                                {
+                                    "lower_bound": 72.0,
+                                    "upper_bound": 72.0
+                                },
+                                {
+                                    "q1": 72.0,
+                                    "q2": 72.0,
+                                    "q3": 72.0,
+                                    "iqr": 0.0,
+                                    "minimum": 72.0,
+                                    "maximum": 72.0
+                                }
+                            ]
+                        },
+                        {
+                            "name": "z_score",
+                            "params": {
+                                "z_max_threshold": 3.0,
+                                "is_non_negative_feature": true
+                            },
+                            "thresholds": [
+                                {
+                                    "lower_bound": 69.52198974931258,
+                                    "upper_bound": 73.86030780247648
+                                },
+                                {
+                                    "mean": 71.69114877589453,
+                                    "std": 0.7230530088606505,
+                                    "z_max_threshold": 3.0
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "name": "chilling_temp",
+                    "strategies": [
+                        {
+                            "name": "iqr",
+                            "params": {
+                                "iqr_multiplier": 1.5,
+                                "is_non_negative_feature": true
+                            },
+                            "thresholds": [
+                                {
+                                    "lower_bound": 9.0,
+                                    "upper_bound": 9.0
+                                },
+                                {
+                                    "q1": 9.0,
+                                    "q2": 9.0,
+                                    "q3": 9.0,
+                                    "iqr": 0.0,
+                                    "minimum": 9.0,
+                                    "maximum": 9.0
+                                }
+                            ]
+                        },
+                        {
+                            "name": "z_score",
+                            "params": {
+                                "z_max_threshold": 3.0,
+                                "is_non_negative_feature": true
+                            },
+                            "thresholds": [
+                                {
+                                    "lower_bound": 9.0,
+                                    "upper_bound": 9.0
+                                },
+                                {
+                                    "mean": 9.0,
+                                    "std": 0.0,
+                                    "z_max_threshold": 3.0
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "database_name": "erpx_dev_production",
+            "table_name": "pp_cooking_readings",
+            "features": [
+                {
+                    "name": "temperature",
+                    "strategies": [
+                        {
+                            "name": "iqr",
+                            "params": {
+                                "iqr_multiplier": 1.5,
+                                "is_non_negative_feature": true
+                            },
+                            "thresholds": [
+                                {
+                                    "lower_bound": 0,
+                                    "upper_bound": 40.90625
+                                },
+                                {
+                                    "q1": 4.1875,
+                                    "q2": 6.6875,
+                                    "q3": 18.875,
+                                    "iqr": 14.6875,
+                                    "minimum": 0,
+                                    "maximum": 40.90625
+                                }
+                            ]
+                        },
+                        {
+                            "name": "mad",
+                            "params": {
+                                "mad_multiplier": 3.5,
+                                "is_non_negative_feature": true
+                            },
+                            "thresholds": [
+                                {
+                                    "lower_bound": 0,
+                                    "upper_bound": 30.09375
+                                },
+                                {
+                                    "median": 6.6875,
+                                    "mad": 6.6875,
+                                    "z_max_threshold": 3.5
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "name": "temperature_type",
+                    "strategies": [
+                        {
+                            "name": "iqr",
+                            "params": {
+                                "iqr_multiplier": 1.5,
+                                "is_non_negative_feature": true
+                            },
+                            "thresholds": [
+                                {
+                                    "lower_bound": 0,
+                                    "upper_bound": 7.0
+                                },
+                                {
+                                    "q1": 2.0,
+                                    "q2": 4.0,
+                                    "q3": 4.0,
+                                    "iqr": 2.0,
+                                    "minimum": 0,
+                                    "maximum": 7.0
+                                }
+                            ]
+                        },
+                        {
+                            "name": "mad",
+                            "params": {
+                                "mad_multiplier": 3.5,
+                                "is_non_negative_feature": true
+                            },
+                            "thresholds": [
+                                {
+                                    "lower_bound": 4.0,
+                                    "upper_bound": 4.0
+                                },
+                                {
+                                    "median": 4.0,
+                                    "mad": 0.0,
+                                    "z_max_threshold": 3.5
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "name": "temperature_fault",
+                    "strategies": [
+                        {
+                            "name": "iqr",
+                            "params": {
+                                "iqr_multiplier": 1.5,
+                                "is_non_negative_feature": true
+                            },
+                            "thresholds": [
+                                {
+                                    "lower_bound": 0,
+                                    "upper_bound": 2.5
+                                },
+                                {
+                                    "q1": 0.0,
+                                    "q2": 1.0,
+                                    "q3": 1.0,
+                                    "iqr": 1.0,
+                                    "minimum": 0,
+                                    "maximum": 2.5
+                                }
+                            ]
+                        },
+                        {
+                            "name": "mad",
+                            "params": {
+                                "mad_multiplier": 3.5,
+                                "is_non_negative_feature": true
+                            },
+                            "thresholds": [
+                                {
+                                    "lower_bound": 1.0,
+                                    "upper_bound": 1.0
+                                },
+                                {
+                                    "median": 1.0,
+                                    "mad": 0.0,
+                                    "z_max_threshold": 3.5
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "database_name": "erpx_dev_production",
+            "table_name": "pp_packing",
+            "features": [
+                {
+                    "name": "net_weight",
+                    "strategies": [
+                        {
+                            "name": "iqr",
+                            "params": {
+                                "iqr_multiplier": 1.5,
+                                "is_non_negative_feature": true
+                            },
+                            "thresholds": [
+                                {
+                                    "lower_bound": 0,
+                                    "upper_bound": 1.8205
+                                },
+                                {
+                                    "q1": 0.453,
+                                    "q2": 0.908,
+                                    "q3": 1.0,
+                                    "iqr": 0.5469999999999999,
+                                    "minimum": 0,
+                                    "maximum": 1.8205
+                                }
+                            ]
+                        },
+                        {
+                            "name": "mad",
+                            "params": {
+                                "mad_multiplier": 3.5,
+                                "is_non_negative_feature": true
+                            },
+                            "thresholds": [
+                                {
+                                    "lower_bound": 0,
+                                    "upper_bound": 2.497
+                                },
+                                {
+                                    "median": 0.908,
+                                    "mad": 0.454,
+                                    "z_max_threshold": 3.5
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "name": "min_weight",
+                    "strategies": [
+                        {
+                            "name": "iqr",
+                            "params": {
+                                "iqr_multiplier": 1.5,
+                                "is_non_negative_feature": true
+                            },
+                            "thresholds": [
+                                {
+                                    "lower_bound": 0,
+                                    "upper_bound": 1.895
+                                },
+                                {
+                                    "q1": 0.52,
+                                    "q2": 1.04,
+                                    "q3": 1.07,
+                                    "iqr": 0.55,
+                                    "minimum": 0,
+                                    "maximum": 1.895
+                                }
+                            ]
+                        },
+                        {
+                            "name": "mad",
+                            "params": {
+                                "mad_multiplier": 3.5,
+                                "is_non_negative_feature": true
+                            },
+                            "thresholds": [
+                                {
+                                    "lower_bound": 0,
+                                    "upper_bound": 2.8425000000000002
+                                },
+                                {
+                                    "median": 1.04,
+                                    "mad": 0.515,
+                                    "z_max_threshold": 3.5
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "name": "no_of_pouches",
+                    "strategies": [
+                        {
+                            "name": "iqr",
+                            "params": {
+                                "iqr_multiplier": 1.5,
+                                "is_non_negative_feature": true
+                            },
+                            "thresholds": [
+                                {
+                                    "lower_bound": 0,
+                                    "upper_bound": 31.0
+                                },
+                                {
+                                    "q1": 6.0,
+                                    "q2": 10.0,
+                                    "q3": 16.0,
+                                    "iqr": 10.0,
+                                    "minimum": 0,
+                                    "maximum": 31.0
+                                }
+                            ]
+                        },
+                        {
+                            "name": "mad",
+                            "params": {
+                                "mad_multiplier": 3.5,
+                                "is_non_negative_feature": true
+                            },
+                            "thresholds": [
+                                {
+                                    "lower_bound": 0,
+                                    "upper_bound": 31.0
+                                },
+                                {
+                                    "median": 10.0,
+                                    "mad": 6.0,
+                                    "z_max_threshold": 3.5
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "name": "pouch_weight",
+                    "strategies": [
+                        {
+                            "name": "iqr",
+                            "params": {
+                                "iqr_multiplier": 1.5,
+                                "is_non_negative_feature": true
+                            },
+                            "thresholds": [
+                                {
+                                    "lower_bound": 0,
+                                    "upper_bound": 0.045
+                                },
+                                {
+                                    "q1": 0.01,
+                                    "q2": 0.014,
+                                    "q3": 0.024,
+                                    "iqr": 0.014,
+                                    "minimum": 0,
+                                    "maximum": 0.045
+                                }
+                            ]
+                        },
+                        {
+                            "name": "mad",
+                            "params": {
+                                "mad_multiplier": 3.5,
+                                "is_non_negative_feature": true
+                            },
+                            "thresholds": [
+                                {
+                                    "lower_bound": 0,
+                                    "upper_bound": 0.028
+                                },
+                                {
+                                    "median": 0.014,
+                                    "mad": 0.004,
+                                    "z_max_threshold": 3.5
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "name": "min_glaze",
+                    "strategies": [
+                        {
+                            "name": "iqr",
+                            "params": {
+                                "iqr_multiplier": 1.5,
+                                "is_non_negative_feature": true
+                            },
+                            "thresholds": [
+                                {
+                                    "lower_bound": 11.0,
+                                    "upper_bound": 11.0
+                                },
+                                {
+                                    "q1": 11.0,
+                                    "q2": 11.0,
+                                    "q3": 11.0,
+                                    "iqr": 0.0,
+                                    "minimum": 11.0,
+                                    "maximum": 11.0
+                                }
+                            ]
+                        },
+                        {
+                            "name": "mad",
+                            "params": {
+                                "mad_multiplier": 3.5,
+                                "is_non_negative_feature": true
+                            },
+                            "thresholds": [
+                                {
+                                    "lower_bound": 11.0,
+                                    "upper_bound": 11.0
+                                },
+                                {
+                                    "median": 11.0,
+                                    "mad": 0.0,
+                                    "z_max_threshold": 3.5
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "name": "max_glaze",
+                    "strategies": [
+                        {
+                            "name": "iqr",
+                            "params": {
+                                "iqr_multiplier": 1.5,
+                                "is_non_negative_feature": true
+                            },
+                            "thresholds": [
+                                {
+                                    "lower_bound": 15.0,
+                                    "upper_bound": 15.0
+                                },
+                                {
+                                    "q1": 15.0,
+                                    "q2": 15.0,
+                                    "q3": 15.0,
+                                    "iqr": 0.0,
+                                    "minimum": 15.0,
+                                    "maximum": 15.0
+                                }
+                            ]
+                        },
+                        {
+                            "name": "mad",
+                            "params": {
+                                "mad_multiplier": 3.5,
+                                "is_non_negative_feature": true
+                            },
+                            "thresholds": [
+                                {
+                                    "lower_bound": 15.0,
+                                    "upper_bound": 15.0
+                                },
+                                {
+                                    "median": 15.0,
+                                    "mad": 0.0,
+                                    "z_max_threshold": 3.5
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "database_name": "erpx_dev_production",
+            "table_name": "pp_packing_master_readings",
+            "features": [
+                {
+                    "name": "weight",
+                    "strategies": [
+                        {
+                            "name": "iqr",
+                            "params": {
+                                "iqr_multiplier": 1.5,
+                                "is_non_negative_feature": true
+                            },
+                            "thresholds": [
+                                {
+                                    "lower_bound": 0,
+                                    "upper_bound": 18.169999842000003
+                                },
+                                {
+                                    "q1": 5.320000172,
+                                    "q2": 5.559999943,
+                                    "q3": 10.46000004,
+                                    "iqr": 5.139999868,
+                                    "minimum": 0,
+                                    "maximum": 18.169999842000003
+                                }
+                            ]
+                        },
+                        {
+                            "name": "mad",
+                            "params": {
+                                "mad_multiplier": 3.5,
+                                "is_non_negative_feature": true
+                            },
+                            "thresholds": [
+                                {
+                                    "lower_bound": 0,
+                                    "upper_bound": 11.790000677999998
+                                },
+                                {
+                                    "median": 5.559999943,
+                                    "mad": 1.7800002099999999,
+                                    "z_max_threshold": 3.5
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "name": "weight_limit",
+                    "strategies": [
+                        {
+                            "name": "iqr",
+                            "params": {
+                                "iqr_multiplier": 1.5,
+                                "is_non_negative_feature": true
+                            },
+                            "thresholds": [
+                                {
+                                    "lower_bound": 0,
+                                    "upper_bound": 18.1500000865
+                                },
+                                {
+                                    "q1": 5.324999809,
+                                    "q2": 5.550000191,
+                                    "q3": 10.45499992,
+                                    "iqr": 5.130000111,
+                                    "minimum": 0,
+                                    "maximum": 18.1500000865
+                                }
+                            ]
+                        },
+                        {
+                            "name": "mad",
+                            "params": {
+                                "mad_multiplier": 3.5,
+                                "is_non_negative_feature": true
+                            },
+                            "thresholds": [
+                                {
+                                    "lower_bound": 0,
+                                    "upper_bound": 11.860500096500001
+                                },
+                                {
+                                    "median": 5.550000191,
+                                    "mad": 1.8029999730000004,
+                                    "z_max_threshold": 3.5
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "database_name": "erpx_dev_production",
+            "table_name": "pp_packing_glazing_reading",
+            "features": [
+                {
+                    "name": "frozen_weight",
+                    "strategies": [
+                        {
+                            "name": "iqr",
+                            "params": {
+                                "iqr_multiplier": 1.5,
+                                "is_non_negative_feature": true
+                            },
+                            "thresholds": [
+                                {
+                                    "lower_bound": 0,
+                                    "upper_bound": 2.044000119
+                                },
+                                {
+                                    "q1": 0.398999989,
+                                    "q2": 0.7014999985,
+                                    "q3": 1.057000041,
+                                    "iqr": 0.658000052,
+                                    "minimum": 0,
+                                    "maximum": 2.044000119
+                                }
+                            ]
+                        },
+                        {
+                            "name": "mad",
+                            "params": {
+                                "mad_multiplier": 3.5,
+                                "is_non_negative_feature": true
+                            },
+                            "thresholds": [
+                                {
+                                    "lower_bound": 0,
+                                    "upper_bound": 1.9317499092499997
+                                },
+                                {
+                                    "median": 0.7014999985,
+                                    "mad": 0.3514999744999999,
+                                    "z_max_threshold": 3.5
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "name": "de_glazed_weight",
+                    "strategies": [
+                        {
+                            "name": "iqr",
+                            "params": {
+                                "iqr_multiplier": 1.5,
+                                "is_non_negative_feature": true
+                            },
+                            "thresholds": [
+                                {
+                                    "lower_bound": 0,
+                                    "upper_bound": 1.7830000825
+                                },
+                                {
+                                    "q1": 0.342999995,
+                                    "q2": 0.6124999824999999,
+                                    "q3": 0.91900003,
+                                    "iqr": 0.576000035,
+                                    "minimum": 0,
+                                    "maximum": 1.7830000825
+                                }
+                            ]
+                        },
+                        {
+                            "name": "mad",
+                            "params": {
+                                "mad_multiplier": 3.5,
+                                "is_non_negative_feature": true
+                            },
+                            "thresholds": [
+                                {
+                                    "lower_bound": 0,
+                                    "upper_bound": 1.6747500752500002
+                                },
+                                {
+                                    "median": 0.6124999824999999,
+                                    "mad": 0.3035000265000001,
+                                    "z_max_threshold": 3.5
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "name": "glaze_percentage",
+                    "strategies": [
+                        {
+                            "name": "iqr",
+                            "params": {
+                                "iqr_multiplier": 1.5,
+                                "is_non_negative_feature": true
+                            },
+                            "thresholds": [
+                                {
+                                    "lower_bound": 0.6013155000000019,
+                                    "upper_bound": 22.3021059
+                                },
+                                {
+                                    "q1": 8.739111900000001,
+                                    "q2": 12.86920166,
+                                    "q3": 14.1643095,
+                                    "iqr": 5.425197599999999,
+                                    "minimum": 0.6013155000000019,
+                                    "maximum": 22.3021059
+                                }
+                            ]
+                        },
+                        {
+                            "name": "mad",
+                            "params": {
+                                "mad_multiplier": 3.5,
+                                "is_non_negative_feature": true
+                            },
+                            "thresholds": [
+                                {
+                                    "lower_bound": 7.062373149999998,
+                                    "upper_bound": 18.67603017
+                                },
+                                {
+                                    "median": 12.86920166,
+                                    "mad": 1.6590938600000005,
+                                    "z_max_threshold": 3.5
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "name": "duration",
+                    "strategies": [
+                        {
+                            "name": "iqr",
+                            "params": {
+                                "iqr_multiplier": 1.5,
+                                "is_non_negative_feature": true
+                            },
+                            "thresholds": [
+                                {
+                                    "lower_bound": 0,
+                                    "upper_bound": 98.0
+                                },
+                                {
+                                    "q1": 33.0,
+                                    "q2": 46.0,
+                                    "q3": 59.0,
+                                    "iqr": 26.0,
+                                    "minimum": 0,
+                                    "maximum": 98.0
+                                }
+                            ]
+                        },
+                        {
+                            "name": "mad",
+                            "params": {
+                                "mad_multiplier": 3.5,
+                                "is_non_negative_feature": true
+                            },
+                            "thresholds": [
+                                {
+                                    "lower_bound": 0.5,
+                                    "upper_bound": 91.5
+                                },
+                                {
+                                    "median": 46.0,
+                                    "mad": 13.0,
+                                    "z_max_threshold": 3.5
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}
