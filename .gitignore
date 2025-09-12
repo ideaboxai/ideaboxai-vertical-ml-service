@@ -19,7 +19,7 @@ datasets/
 *.feather
 
 # Model files
-models/
+/models/
 checkpoints/
 *.pt
 *.pth
