@@ -61,7 +61,7 @@ def run_yield_anomaly_detection():
         cross_stage_stats = {"cross_stage_name": cross_stage_name, "features": []}
 
         dataframe = yield_data_mapper.get(cross_stage_name)
-        if dataframe is None:
+        if dataframe.empty:
             logger.warning(f"No data found for cross stage: {cross_stage_name}")
             continue
 
