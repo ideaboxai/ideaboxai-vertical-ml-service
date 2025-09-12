@@ -5,6 +5,10 @@ from src.sandhya_aqua_erp.utils.param_input_validator import param_input_validat
 from src.sandhya_aqua_erp.repositories.yield_repo import YieldRepository
 import ast
 
+from src.sandhya_aqua_erp.anomaly_detection.supply_chain.pipeline.infer.infer_cross_stage_yield_stats import (
+    run_yield_anomaly_detection,
+)
+
 from src.sandhya_aqua_erp.anomaly_detection.supply_chain.pipeline.predict.predict_cross_stage import (
     predict,
 )
@@ -101,6 +105,22 @@ async def get_anomaly(
     except ValueError as ve:
         return JSONResponse(
             status_code=400, content={"error": f"Invalid input parameter: {str(ve)}"}
+        )
+    except Exception as e:
+        return JSONResponse(
+            status_code=500, content={"error": f"An error occurred: {str(e)}"}
+        )
+
+
+@router.get("/trigger-stat-ad-calculation")
+async def trigger_stat_ad_calculation():
+    """
+    Endpoint to trigger statistical anomaly detection calculation for yield data.
+    """
+    try:
+        run_yield_anomaly_detection()
+        return JSONResponse(
+            status_code=status.HTTP_200_OK, content={"message": "Triggered"}
         )
     except Exception as e:
         return JSONResponse(
