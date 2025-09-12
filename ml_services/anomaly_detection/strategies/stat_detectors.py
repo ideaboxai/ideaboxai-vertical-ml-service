@@ -14,6 +14,7 @@ class IQRDetector(BaseAnomalyDetector):
         data = data.dropna()
 
         q1 = data.quantile(0.25)
+        q2 = data.quantile(0.50)
         q3 = data.quantile(0.75)
         iqr = q3 - q1
         multiplier = self.params.get("iqr_multiplier", 1.5)
@@ -31,8 +32,16 @@ class IQRDetector(BaseAnomalyDetector):
         print(f"IQRDetector fitted. Lower: {lower_bound:.2f}, Upper: {upper_bound:.2f}")
 
         thresholds = {"lower_bound": lower_bound, "upper_bound": upper_bound}
+        stat_values = {
+            "q1": q1,
+            "q2": q2,
+            "q3": q3,
+            "iqr": iqr,
+            "minimum": lower_bound,
+            "maximum": upper_bound,
+        }
 
-        return thresholds
+        return thresholds, stat_values
 
     def predict(self, data: pd.DataFrame) -> pd.Series:
         pass
@@ -70,8 +79,9 @@ class ZScoreDetector(BaseAnomalyDetector):
         upper_bound = mean_ + z_max_threshold * std_
 
         thresholds = {"lower_bound": lower_bound, "upper_bound": upper_bound}
+        stat_values = {"mean": mean_, "std": std_, "z_max_threshold": z_max_threshold}
 
-        return thresholds
+        return thresholds, stat_values
 
     def predict(self, data: pd.DataFrame) -> pd.Series:
         pass
@@ -106,7 +116,8 @@ class MADDetector(BaseAnomalyDetector):
         upper_bound = median + multiplier * mad
 
         thresholds = {"lower_bound": lower_bound, "upper_bound": upper_bound}
-        return thresholds
+        stat_values = {"median": median, "mad": mad, "z_max_threshold": multiplier}
+        return thresholds, stat_values
 
     def predict(self, data: pd.DataFrame) -> pd.Series:
         pass
