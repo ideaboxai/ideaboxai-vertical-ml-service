@@ -19,7 +19,7 @@ datasets/
 *.feather
 
 # Model files
-models/
+# models/
 checkpoints/
 *.pt
 *.pth
@@ -44,4 +44,4 @@ mlruns/
 # Environment files
 .env
 /data
-/models
+# /models
