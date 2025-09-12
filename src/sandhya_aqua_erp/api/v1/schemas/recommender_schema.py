@@ -4,6 +4,7 @@ from typing import Optional
 
 class RequestModel(BaseModel):
     lot_number: Optional[str] = None
+    anomaly_id: Optional[str]= None
     # sale_order: str
 
 class ResponseModel(BaseModel):

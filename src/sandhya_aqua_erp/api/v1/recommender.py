@@ -13,7 +13,7 @@ redis_client = redis.Redis(host="ml-service-redis", port=6379, decode_responses=
 # redis_client = redis.Redis(host="0.0.0.0", port=6379, decode_responses=True)
 
 
-async def fetch_process_parameters(lot_number: str):
+async def fetch_process_parameters(lot_number: str, anomaly_id: str):
     cube_service = CubeService()
     recommendation_lot_filter = {
         "member": "RECOMMENDATION.plant_lot_number",
@@ -21,9 +21,9 @@ async def fetch_process_parameters(lot_number: str):
         "values": [lot_number],
     }
     anomaly_lot_filter = {
-        "member": "ANOMALY_NUMBER.lot_number",
+        "member": "ANOMALY_NUMBER.id",
         "operator": "equals",
-        "values": [lot_number],
+        "values": [anomaly_id],
     }
     (
         grn_process,
@@ -63,6 +63,7 @@ def ensure_sse_format(chunk: str) -> str:
 @app.post("/recommend")
 async def recommend(request: RequestModel):
     lot_number = request.lot_number
+    anomaly_id = request.anomaly_id
 
     cache_key = f"recommend:{lot_number}"
     cached_data = redis_client.get(cache_key)
@@ -85,7 +86,7 @@ async def recommend(request: RequestModel):
     chat_history = []
     structured_input = f"User Query: {user_prompt}" if user_prompt else "User Query:"
 
-    parameters = await fetch_process_parameters(lot_number=lot_number)
+    parameters = await fetch_process_parameters(lot_number=lot_number, anomaly_id=anomaly_id)
 
     if mode == "stream":
         response_stream = await recommender.get_recommendation(
