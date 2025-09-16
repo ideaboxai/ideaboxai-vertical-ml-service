@@ -442,7 +442,6 @@ class YieldRepository:
             "dimensions": [
                 "INDENT_GRN.plant_lot_number",
                 "INDENT_GRN.species",
-                "GRADING.sale_order",
                 "GRADING.count_per_pound",
                 "INDENT_GRN.yield",
                 "INDENT_GRN.updated_at",
@@ -482,7 +481,6 @@ class YieldRepository:
         query_params = {
             "dimensions": [
                 "SOAKING.plant_lot_number",
-                "SOAKING.sale_order",
                 "SOAKING.count_per_pound",
                 "SOAKING.sku",
                 "SOAKING.time_minutes",
