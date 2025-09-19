@@ -11,6 +11,7 @@ from src.sandhya_aqua_erp.utils.prompt import (
     Root_cause_analysis_system_prompt,
     Root_cause_analysis_user_prompt,
 )
+from pydantic import BaseModel
 
 load_dotenv()
 
@@ -21,6 +22,12 @@ langfuse = Langfuse(
 )
 
 
+class RecommendationOutput(BaseModel):
+    issue: str
+    potential_causes: List[str]
+    recommended_actions: List[str]
+
+
 class OpenAIRecommender:
     def __init__(
         self,
@@ -29,7 +36,11 @@ class OpenAIRecommender:
         mode: Literal["stream", "normal"] = "normal",
     ):
         self.mode = mode
-        self.client = AsyncOpenAI(api_key=api_key) if mode == "stream" else OpenAI(api_key=api_key)
+        self.client = (
+            AsyncOpenAI(api_key=api_key)
+            if mode == "stream"
+            else OpenAI(api_key=api_key)
+        )
         self.model = model
 
     async def get_recommendation(
@@ -48,10 +59,15 @@ class OpenAIRecommender:
         )
 
         try:
-            with langfuse.start_as_current_span(name="Sandhya Aqua Recommender") as span:
-                span.update(input=Recommendation_system_prompt + "\n\n" + finalized_prompt)
+            with langfuse.start_as_current_span(
+                name="Sandhya Aqua Recommender"
+            ) as span:
+                span.update(
+                    input=Recommendation_system_prompt + "\n\n" + finalized_prompt
+                )
 
                 if self.mode == "stream":
+
                     async def stream_generator():
                         async with self.client.responses.stream(
                             model=self.model,
@@ -64,16 +80,18 @@ class OpenAIRecommender:
                                     yield event.delta
                             final = await stream.get_final_response()
                             self._log_usage(span, final)
+
                     return stream_generator()
                 else:
-                    response = self.client.responses.create(
+                    response = self.client.responses.parse(
                         model=self.model,
                         input=finalized_prompt,
                         instructions=Recommendation_system_prompt,
                         metadata={"model": self.model},
+                        text_format=RecommendationOutput,
                     )
                     self._log_usage(span, response)
-                    return response.output_text
+                    return response.output_parsed.model_dump_json()
 
         except Exception as e:
             return f"Error: {str(e)}"
@@ -85,8 +103,12 @@ class OpenAIRecommender:
         finalized_prompt = Root_cause_analysis_user_prompt.format(user_query=user_input)
 
         try:
-            with langfuse.start_as_current_span(name="Sandhya Aqua Root Cause Analysis") as span:
-                span.update(input=Root_cause_analysis_system_prompt + "\n\n" + finalized_prompt)
+            with langfuse.start_as_current_span(
+                name="Sandhya Aqua Root Cause Analysis"
+            ) as span:
+                span.update(
+                    input=Root_cause_analysis_system_prompt + "\n\n" + finalized_prompt
+                )
 
                 if self.mode == "stream":
                     async with self.client.responses.stream(
@@ -127,7 +149,9 @@ class OpenAIRecommender:
                 "output": response.usage.output_tokens if response.usage else 0,
                 "total": response.usage.total_tokens if response.usage else 0,
                 "prompt_tokens": response.usage.input_tokens if response.usage else 0,
-                "completion_tokens": response.usage.output_tokens if response.usage else 0,
+                "completion_tokens": (
+                    response.usage.output_tokens if response.usage else 0
+                ),
                 "total_tokens": response.usage.total_tokens if response.usage else 0,
             },
             model=self.model,
