@@ -33,12 +33,22 @@ async def fetch_process_parameters(lot_number: str, anomaly_id: str):
         yield_process,
         anomaly_data,
     ) = await asyncio.gather(
-        cube_service.get_data("grn_process_query", lot_number,recommendation_lot_filter),
-        cube_service.get_data("grading_process_query", lot_number,recommendation_lot_filter),
-        cube_service.get_data("soaking_process_query", lot_number,recommendation_lot_filter),
-        cube_service.get_data("cooking_process_query", lot_number,recommendation_lot_filter),
-        cube_service.get_data("yield_calculation_query", lot_number,recommendation_lot_filter),
-        cube_service.get_data("anomaly_query", lot_number,anomaly_lot_filter),
+        cube_service.get_data(
+            "grn_process_query", lot_number, recommendation_lot_filter
+        ),
+        cube_service.get_data(
+            "grading_process_query", lot_number, recommendation_lot_filter
+        ),
+        cube_service.get_data(
+            "soaking_process_query", lot_number, recommendation_lot_filter
+        ),
+        cube_service.get_data(
+            "cooking_process_query", lot_number, recommendation_lot_filter
+        ),
+        cube_service.get_data(
+            "yield_calculation_query", lot_number, recommendation_lot_filter
+        ),
+        cube_service.get_data("anomaly_query", lot_number, anomaly_lot_filter),
     )
 
     parameters = {
@@ -86,7 +96,9 @@ async def recommend(request: RequestModel):
     chat_history = []
     structured_input = f"User Query: {user_prompt}" if user_prompt else "User Query:"
 
-    parameters = await fetch_process_parameters(lot_number=lot_number, anomaly_id=anomaly_id)
+    parameters = await fetch_process_parameters(
+        lot_number=lot_number, anomaly_id=anomaly_id
+    )
 
     if mode == "stream":
         response_stream = await recommender.get_recommendation(
@@ -107,5 +119,5 @@ async def recommend(request: RequestModel):
         result = await recommender.get_recommendation(
             structured_input, chat_history, parameters=parameters
         )
-        redis_client.setex(cache_key, 24 * 60 * 60, json.dumps(result))
-        return {"recommendation": result}
+        redis_client.setex(cache_key, 24 * 60 * 60, (result))
+        return {"recommendation": json.loads(result)}
