@@ -4,7 +4,7 @@
         "repository_class": "YieldRepository",
         "features": [
             {
-                "name": "indent_count",
+                "name": "GRADING.count_per_pound",
                 "strategies": [
                     {
                         "name": "iqr",
@@ -23,7 +23,7 @@
                 ]
             },
             {
-                "name": "indent_quantity",
+                "name": "INDENT_GRN.yield",
                 "strategies": [
                     {
                         "name": "iqr",
@@ -42,140 +42,7 @@
                 ]
             },
             {
-                "name": "indent_yield",
-                "strategies": [
-                    {
-                        "name": "iqr",
-                        "params": {
-                            "iqr_multiplier": 1.5,
-                            "is_non_negative_feature": false
-                        }
-                    },
-                    {
-                        "name": "mad",
-                        "params": {
-                            "mad_multiplier": 3.5,
-                            "is_non_negative_feature": false
-                        }
-                    }
-                ]
-            },
-            {
-                "name": "grn_quantity",
-                "strategies": [
-                    {
-                        "name": "iqr",
-                        "params": {
-                            "iqr_multiplier": 1.5,
-                            "is_non_negative_feature": true
-                        }
-                    },
-                    {
-                        "name": "mad",
-                        "params": {
-                            "mad_multiplier": 3.5,
-                            "is_non_negative_feature": true
-                        }
-                    }
-                ]
-            },
-            {
-                "name": "grn_count",
-                "strategies": [
-                    {
-                        "name": "iqr",
-                        "params": {
-                            "iqr_multiplier": 1.5,
-                            "is_non_negative_feature": true
-                        }
-                    },
-                    {
-                        "name": "mad",
-                        "params": {
-                            "mad_multiplier": 3.5,
-                            "is_non_negative_feature": true
-                        }
-                    }
-                ]
-            },
-            {
-                "name": "grading_yield",
-                "strategies": [
-                    {
-                        "name": "iqr",
-                        "params": {
-                            "iqr_multiplier": 1.5,
-                            "is_non_negative_feature": false
-                        }
-                    },
-                    {
-                        "name": "mad",
-                        "params": {
-                            "mad_multiplier": 3.5,
-                            "is_non_negative_feature": false
-                        }
-                    }
-                ]
-            },
-            {
-                "name": "hl_weight",
-                "strategies": [
-                    {
-                        "name": "iqr",
-                        "params": {
-                            "iqr_multiplier": 1.5,
-                            "is_non_negative_feature": true
-                        }
-                    },
-                    {
-                        "name": "mad",
-                        "params": {
-                            "mad_multiplier": 3.5,
-                            "is_non_negative_feature": true
-                        }
-                    }
-                ]
-            },
-            {
-                "name": "hon_count",
-                "strategies": [
-                    {
-                        "name": "iqr",
-                        "params": {
-                            "iqr_multiplier": 1.5,
-                            "is_non_negative_feature": true
-                        }
-                    },
-                    {
-                        "name": "mad",
-                        "params": {
-                            "mad_multiplier": 3.5,
-                            "is_non_negative_feature": true
-                        }
-                    }
-                ]
-            },
-            {
-                "name": "hon_weight",
-                "strategies": [
-                    {
-                        "name": "iqr",
-                        "params": {
-                            "iqr_multiplier": 1.5,
-                            "is_non_negative_feature": true
-                        }
-                    },
-                    {
-                        "name": "mad",
-                        "params": {
-                            "mad_multiplier": 3.5,
-                            "is_non_negative_feature": true
-                        }
-                    }
-                ]
-            },
-            {
-                "name": "grading_yield",
+                "name": "GRADING.grading_weight",
                 "strategies": [
                     {
                         "name": "iqr",
@@ -200,7 +67,7 @@
         "repository_class": "YieldRepository",
         "features": [
             {
-                "name": "grading_yield",
+                "name": "SOAKING.time_minutes",
                 "strategies": [
                     {
                         "name": "iqr",
@@ -219,7 +86,7 @@
                 ]
             },
             {
-                "name": "grading_net_weight",
+                "name": "SOAKING.temperature",
                 "strategies": [
                     {
                         "name": "iqr",
@@ -238,7 +105,7 @@
                 ]
             },
             {
-                "name": "grn_quantity",
+                "name": "GRADING.yield",
                 "strategies": [
                     {
                         "name": "iqr",
@@ -257,7 +124,7 @@
                 ]
             },
             {
-                "name": "grading_count",
+                "name": "SOAKING.count_per_pound",
                 "strategies": [
                     {
                         "name": "iqr",
@@ -276,7 +143,7 @@
                 ]
             },
             {
-                "name": "grading_weight",
+                "name": "SOAKING.soaking_weight",
                 "strategies": [
                     {
                         "name": "iqr",
@@ -290,101 +157,6 @@
                         "params": {
                             "mad_multiplier": 3.5,
                             "is_non_negative_feature": true
-                        }
-                    }
-                ]
-            },
-            {
-                "name": "soaking_cnt",
-                "strategies": [
-                    {
-                        "name": "iqr",
-                        "params": {
-                            "iqr_multiplier": 1.5,
-                            "is_non_negative_feature": true
-                        }
-                    },
-                    {
-                        "name": "mad",
-                        "params": {
-                            "mad_multiplier": 3.5,
-                            "is_non_negative_feature": true
-                        }
-                    }
-                ]
-            },
-            {
-                "name": "soaking_weight",
-                "strategies": [
-                    {
-                        "name": "iqr",
-                        "params": {
-                            "iqr_multiplier": 1.5,
-                            "is_non_negative_feature": true
-                        }
-                    },
-                    {
-                        "name": "mad",
-                        "params": {
-                            "mad_multiplier": 3.5,
-                            "is_non_negative_feature": true
-                        }
-                    }
-                ]
-            },
-            {
-                "name": "soaking_yield",
-                "strategies": [
-                    {
-                        "name": "iqr",
-                        "params": {
-                            "iqr_multiplier": 1.5,
-                            "is_non_negative_feature": false
-                        }
-                    },
-                    {
-                        "name": "mad",
-                        "params": {
-                            "mad_multiplier": 3.5,
-                            "is_non_negative_feature": false
-                        }
-                    }
-                ]
-            },
-            {
-                "name": "cooking_temp",
-                "strategies": [
-                    {
-                        "name": "iqr",
-                        "params": {
-                            "iqr_multiplier": 1.5,
-                            "is_non_negative_feature": false
-                        }
-                    },
-                    {
-                        "name": "z_score",
-                        "params": {
-                            "z_max_threshold": 3.0,
-                            "is_non_negative_feature": false
-                        }
-                    }
-                ]
-            },
-            {
-                "name": "chilling_temp",
-                "strategies": [
-                    {
-                        "name": "iqr",
-                        "params": {
-                            "iqr_multiplier": 1.5,
-                            "is_non_negative_feature": false
-                        }
-                    },
-                    {
-                        "name": "z_score",
-                        "params": {
-                            "z_max_threshold": 3.0,
-                            "is_non_negative_feature": false
                         }
                     }
                 ]
@@ -396,7 +168,7 @@
         "repository_class": "YieldRepository",
         "features": [
             {
-                "name": "soak_weight",
+                "name": "PACKING_YIELD.pak_wt",
                 "strategies": [
                     {
                         "name": "iqr",
@@ -415,7 +187,51 @@
                 ]
             },
             {
-                "name": "pak_wt",
+                "name": "PACKING_YIELD.yield",
+                "strategies": [
+                    {
+                        "name": "iqr",
+                        "params": {
+                            "iqr_multiplier": 1.5,
+                            "is_non_negative_feature": true
+                        }
+                    },
+                    {
+                        "name": "mad",
+                        "params": {
+                            "mad_multiplier": 3.5,
+                            "is_non_negative_feature": true
+                        }
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "cross_stage_name": "cooking_yield_data",
+        "repository_class": "YieldRepository",
+        "features": [
+            {
+                "name": "COOKING.count_per_pound",
+                "strategies": [
+                    {
+                        "name": "iqr",
+                        "params": {
+                            "iqr_multiplier": 1.5,
+                            "is_non_negative_feature": false
+                        }
+                    },
+                    {
+                        "name": "mad",
+                        "params": {
+                            "mad_multiplier": 3.5,
+                            "is_non_negative_feature": false
+                        }
+                    }
+                ]
+            },
+            {
+                "name": "COOKING.time_minutes",
                 "strategies": [
                     {
                         "name": "iqr",
@@ -434,7 +250,7 @@
                 ]
             },
             {
-                "name": "pack_yield",
+                "name": "COOKING.temperature",
                 "strategies": [
                     {
                         "name": "iqr",
@@ -448,6 +264,63 @@
                         "params": {
                             "mad_multiplier": 3.5,
                             "is_non_negative_feature": true
+                        }
+                    }
+                ]
+            },
+            {
+                "name": "COOKING.cooking_temp",
+                "strategies": [
+                    {
+                        "name": "iqr",
+                        "params": {
+                            "iqr_multiplier": 1.5,
+                            "is_non_negative_feature": true
+                        }
+                    },
+                    {
+                        "name": "mad",
+                        "params": {
+                            "mad_multiplier": 3.5,
+                            "is_non_negative_feature": true
+                        }
+                    }
+                ]
+            },
+            {
+                "name": "COOKING.chilling_temp",
+                "strategies": [
+                    {
+                        "name": "iqr",
+                        "params": {
+                            "iqr_multiplier": 1.5,
+                            "is_non_negative_feature": true
+                        }
+                    },
+                    {
+                        "name": "mad",
+                        "params": {
+                            "mad_multiplier": 3.5,
+                            "is_non_negative_feature": true
+                        }
+                    }
+                ]
+            },
+            {
+                "name": "COOKING.water_zone_temp",
+                "strategies": [
+                    {
+                        "name": "iqr",
+                        "params": {
+                            "iqr_multiplier": 1.5,
+                            "is_non_negative_feature": false
+                        }
+                    },
+                    {
+                        "name": "mad",
+                        "params": {
+                            "mad_multiplier": 3.5,
+                            "is_non_negative_feature": false
                         }
                     }
                 ]

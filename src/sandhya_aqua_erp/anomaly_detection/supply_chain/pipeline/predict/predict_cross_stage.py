@@ -65,7 +65,6 @@ def predict(cross_stage_name: str, data: pd.DataFrame):
         thresholds = json.load(f)
 
     items = thresholds.get("data", [])
-
     for item in items:
         if item.get("cross_stage_name") == cross_stage_name:
             features = item.get("features", [])
@@ -87,12 +86,12 @@ def predict(cross_stage_name: str, data: pd.DataFrame):
                     lower_bound = thresholds_dict.get("lower_bound")
                     upper_bound = thresholds_dict.get("upper_bound")
 
-                    feature_data[f"{feature_name}_{strategy_name}_lower_bound"] = (
-                        lower_bound
-                    )
-                    feature_data[f"{feature_name}_{strategy_name}_upper_bound"] = (
-                        upper_bound
-                    )
+                    # feature_data[f"{feature_name}_{strategy_name}_lower_bound"] = (
+                    #     lower_bound
+                    # )
+                    # feature_data[f"{feature_name}_{strategy_name}_upper_bound"] = (
+                    #     upper_bound
+                    # )
 
                     # Individual strategy anomaly detection
                     strategy_anomaly = (feature_data[feature_name] < lower_bound) | (
@@ -138,7 +137,7 @@ def predict(cross_stage_name: str, data: pd.DataFrame):
                     [data, feature_data.drop(columns=[feature_name])], axis=1
                 )
 
-    return data
+    return data, features
 
 
 def _calculate_deviation(values, strategy_results):
@@ -157,27 +156,43 @@ def _calculate_deviation(values, strategy_results):
     for value in values:
         min_deviation = float("inf")
 
+        # Skip null/nan values
+        if pd.isna(value) or value is None:
+            deviations.append(0.0)
+            continue
+
         for results in strategy_results.values():
             lower_bound = results["lower_bound"]
             upper_bound = results["upper_bound"]
 
+            # Check lower bound violation
             if (
                 lower_bound is not None
                 and pd.notna(lower_bound)
-                and value is not None
-                and pd.notna(value)
                 and value < lower_bound
             ):
-                deviation = abs((value - lower_bound) / lower_bound * 100)
+                # Avoid division by zero
+                if lower_bound == 0:
+                    deviation = (
+                        abs(value) * 100
+                    )  # Treat as 100% deviation when bound is 0
+                else:
+                    deviation = abs((value - lower_bound) / lower_bound * 100)
                 min_deviation = min(min_deviation, deviation)
+
+            # Check upper bound violation
             elif (
                 upper_bound is not None
                 and pd.notna(upper_bound)
-                and value is not None
-                and pd.notna(value)
                 and value > upper_bound
             ):
-                deviation = abs((value - upper_bound) / upper_bound * 100)
+                # Avoid division by zero
+                if upper_bound == 0:
+                    deviation = (
+                        abs(value) * 100
+                    )  # Treat as 100% deviation when bound is 0
+                else:
+                    deviation = abs((value - upper_bound) / upper_bound * 100)
                 min_deviation = min(min_deviation, deviation)
 
         deviations.append(min_deviation if min_deviation != float("inf") else 0.0)
@@ -203,6 +218,11 @@ def _generate_remarks(values, strategy_results, feature_name):
     feature_type = feature_name.lower()
 
     for i, value in enumerate(values):
+        # Skip null/nan values
+        if pd.isna(value) or value is None:
+            remarks.append("no data")
+            continue
+
         value_remarks = []
 
         for strategy_name, results in strategy_results.items():
@@ -212,7 +232,11 @@ def _generate_remarks(values, strategy_results, feature_name):
 
                 if pd.notna(lower_bound) and value < lower_bound:
                     # Value is below lower bound
-                    deviation_pct = abs((value - lower_bound) / lower_bound * 100)
+                    if lower_bound == 0:
+                        deviation_pct = abs(value) * 100
+                    else:
+                        deviation_pct = abs((value - lower_bound) / lower_bound * 100)
+
                     if deviation_pct > 80:
                         intensity = "very low"
                     elif deviation_pct > 10:
@@ -226,7 +250,11 @@ def _generate_remarks(values, strategy_results, feature_name):
 
                 elif pd.notna(upper_bound) and value > upper_bound:
                     # Value is above upper bound
-                    deviation_pct = abs((value - upper_bound) / upper_bound * 100)
+                    if upper_bound == 0:
+                        deviation_pct = abs(value) * 100
+                    else:
+                        deviation_pct = abs((value - upper_bound) / upper_bound * 100)
+
                     if deviation_pct > 80:
                         intensity = "very high"
                     elif deviation_pct > 10:
@@ -268,5 +296,7 @@ def _get_feature_descriptor(feature_type):
         return "pressure"
     elif "rate" in feature_type:
         return "rate"
+    elif "yield" in feature_type:
+        return "yield"
     else:
         return "value"

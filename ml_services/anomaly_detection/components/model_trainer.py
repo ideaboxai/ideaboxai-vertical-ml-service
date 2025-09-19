@@ -26,8 +26,8 @@ class ModelTrainer:
 
         if self.config.model_name in STAT_DETECTORS:
             # Statistical detectors: fit returns thresholds
-            thresholds = detector.fit(data)
-            return thresholds
+            thresholds, stat_values = detector.fit(data)
+            return thresholds, stat_values
         else:
             # ML detectors: fit returns fitted model
             detector.fit(data)
