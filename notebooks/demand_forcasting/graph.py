@@ -1,5 +1,7 @@
 import matplotlib.pyplot as plt
 import pandas as pd
+from scipy.stats import gaussian_kde
+import numpy as np
 
 # Generic plotting functions
 def plot_line_graph(data_x, data_y, title="Line Graph", x_label="X-axis", y_label="Y-axis"):
@@ -74,6 +76,40 @@ def plot_heatmap(data, title="Heatmap", x_labels=None, y_labels=None):
     plt.colorbar(label='Frequency')
     plt.xticks(range(len(x_labels or data.columns)), x_labels or data.columns, rotation=45, ha='right')
     plt.yticks(range(len(y_labels or data.index)), y_labels or data.index)
+    plt.tight_layout()
+    plt.show()
+
+def plot_histogram(series, bins=30, title="Histogram", x_label="Values", y_label="Frequency", kde=False):
+    data = series.dropna()
+
+    plt.figure(figsize=(10, 6))
+    # Histogram
+    plt.hist(data, bins=bins, edgecolor="black", alpha=0.6, density=kde)
+
+    # KDE curve
+    if kde and len(data) > 1:
+        kde_est = gaussian_kde(data)
+        x_vals = np.linspace(data.min(), data.max(), 200)
+        y_vals = kde_est(x_vals)
+        plt.plot(x_vals, y_vals, color="red", linewidth=2, label="KDE")
+        plt.legend()
+
+    plt.title(title)
+    plt.xlabel(x_label)
+    plt.ylabel(y_label if not kde else "Density")
+    plt.grid(True)
+    plt.tight_layout()
+    plt.show()
+
+
+def plot_grouped_box_plot(df, group_col, value_col, title="Grouped Box Plot", y_label="Values"):
+    plt.figure(figsize=(10, 6))
+    groups = [df[value_col][df[group_col] == cat].dropna() for cat in df[group_col].unique()]
+    plt.boxplot(groups, labels=df[group_col].unique())
+    plt.title(title)
+    plt.ylabel(y_label)
+    plt.xlabel(group_col)
+    plt.xticks(rotation=45, ha='right')
     plt.tight_layout()
     plt.show()
 
