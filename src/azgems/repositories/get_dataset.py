@@ -64,12 +64,6 @@ class DatasetPreparation:
 
     def clean_dataset(self) -> pd.DataFrame:
         dataset = self.get_necessary_dataset()
-        # converting date columns to datetime
-        date_columns = ["bill_date", "due_date", "eta", "receipt_date"]
-        for col in date_columns:
-            dataset[col] = pd.to_datetime(
-                dataset[col], format="%d %b %Y", errors="coerce"
-            )
         # need to add other logics for cleaning
         dataset["yield_percentage"] = (
             dataset["yield_percentage"]
@@ -80,24 +74,53 @@ class DatasetPreparation:
             .fillna("0")
             .astype(float)
         )
-        dataset = fill_unknown_for_object_cols(dataset)
+        dataset["quantity_in"] = dataset["quantity_in"].astype(float)
+        dataset["ocean_freight"] = (
+            dataset["ocean_freight"]
+            .astype(str)
+            .str.strip()
+            .replace("", "0")
+            .fillna("0")
+            .astype(float)
+        )
         return dataset
 
-    def calculate_target_variable_from_dataset(self):
+    def calculate_target_variable_from_clean_dataset(self):
         cleaned_df = self.clean_dataset()
         cleaned_df = cleaned_df.dropna(subset=["receipt_date", "eta"])
+        # converting date columns to datetime
+        date_columns = ["bill_date", "due_date", "eta"]
+        for col in date_columns:
+            cleaned_df[col] = pd.to_datetime(
+                cleaned_df[col], format="%d %b %Y", errors="coerce"
+            )
+            cleaned_df[f"{col}_year"] = cleaned_df[f"{col}"].dt.year
+            cleaned_df[f"{col}_year"] = cleaned_df[f"{col}_year"].astype("str")
+            cleaned_df[f"{col}_month"] = cleaned_df[f"{col}"].dt.month
+            cleaned_df[f"{col}_month"] = cleaned_df[f"{col}_month"].astype("str")
+            cleaned_df[f"{col}_day"] = cleaned_df[col].dt.day
+            cleaned_df[f"{col}_day"] = cleaned_df[f"{col}_day"].astype("str")
+            cleaned_df[f"{col}_weekday"] = cleaned_df[f"{col}"].dt.weekday
+            cleaned_df[f"{col}_weekday"] = cleaned_df[f"{col}_weekday"].astype("str")
+
+        cleaned_df["receipt_date"] = pd.to_datetime(
+            cleaned_df["receipt_date"], format="%d %b %Y", errors="coerce"
+        )
         cleaned_df["shipment_delay_days"] = (
             cleaned_df["receipt_date"] - cleaned_df["eta"]
         ).dt.days
         cleaned_df["shipment_classified"] = cleaned_df["shipment_delay_days"].apply(
             lambda x: "on_time" if x <= self.threshold_for_delay else "delayed"
         )
-        cleaned_df.drop(columns=["receipt_date", "shipment_delay_days"], inplace=True)
+        cleaned_df.drop(
+            columns=date_columns + ["shipment_delay_days", "receipt_date"], inplace=True
+        )
+        cleaned_df = fill_unknown_for_object_cols(cleaned_df)
         return cleaned_df
 
 
 if __name__ == "__main__":
     dataset = DatasetPreparation()
-    cleaned_df = dataset.calculate_target_variable_from_dataset()
+    cleaned_df = dataset.calculate_target_variable_from_clean_dataset()
     cleaned_df.info()
-    cleaned_df.to_csv("cleaned_dataset.csv", index=False)
+    # cleaned_df.to_csv("cleaned_dataset.csv", index=False)
