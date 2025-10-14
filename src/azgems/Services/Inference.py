@@ -1,18 +1,22 @@
 import pandas as pd
 import joblib
 from typing import Dict
+from src.azgems.repositories.get_dataset import DatasetPreparation
 
 
 class ModelInference:
-    def __init__(self, model_path: str):
+    def __init__(self, customer_name: str, start_timestamp, end_timestamp):
         """
         Load the saved model, scaler, encoders, and feature list.
         """
-        saved = joblib.load(model_path)
+        saved = joblib.load(f"models/azgems/{customer_name}/model.pkl")
         self.model = saved["model"]
         self.scaler = saved["scaler"]
         self.encoders = saved["encoders"]
         self.features = saved["features"]
+        self.customer_name = customer_name
+        self.start_timestamp = start_timestamp
+        self.end_timestamp = end_timestamp
 
     def preprocess_input(self, data_point: Dict) -> pd.DataFrame:
         """
@@ -44,6 +48,34 @@ class ModelInference:
         prediction = self.model.predict(df_scaled)[0]
         probability = self.model.predict_proba(df_scaled)[0]
         return prediction, probability
+
+    def get_data_for_inference_from_cube(self):
+        """
+        Fetch data, run inference row-by-row,
+        and return a list of dictionaries containing
+        batch_in_id and prediction.
+        """
+        # 1️⃣ Load data
+        get_data = DatasetPreparation(
+            customer_name=self.customer_name,
+            start_timestamp=self.start_timestamp,
+            end_timestamp=self.end_timestamp,
+        ).calculate_target_variable_from_clean_dataset(task="inference")
+
+        results = []
+
+        for _, row in get_data.iterrows():
+            data_point = row.to_dict()
+            batch_id = data_point.get("batch_in_id")
+
+            if batch_id is None:
+                continue  # skip if batch_in_id missing
+
+            prediction, _ = self.predict(data_point)
+
+            results.append({"batch_in_id": batch_id, "prediction": prediction})
+
+        return results
 
 
 if __name__ == "__main__":

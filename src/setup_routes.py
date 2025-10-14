@@ -7,6 +7,9 @@ from src.sandhya_aqua_erp.api.v1.root_cause_analysis import (
     router as root_cause_analysis_router,
 )
 from src.sandhya_aqua_erp.api.v1.farmer_ranking import router as farmer_ranking_router
+from src.azgems.api.v1.shipment_classification import (
+    router as shipment_classification_router,
+)
 
 
 def setup_routes(app: FastAPI):
@@ -29,4 +32,10 @@ def setup_routes(app: FastAPI):
         farmer_ranking_router,
         prefix="/api/v1/sandhya/farmer-ranking",
         tags=["Sandhya Farmer Ranking"],
+    )
+
+    app.include_router(
+        shipment_classification_router,
+        prefix="/api/v1/azgems",
+        tags=["Shipment Classification"],
     )
