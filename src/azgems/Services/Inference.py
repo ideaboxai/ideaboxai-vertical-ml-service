@@ -6,7 +6,7 @@ from src.azgems.Services.OpenAIclient import OpenAIClient
 
 
 class ModelInference:
-    def __init__(self, customer_name: str, start_timestamp, end_timestamp):
+    def __init__(self, customer_name: str, start_timestamp, end_timestamp, po_comitted: str):
         """
         Load the saved model, scaler, encoders, and feature list.
         """
@@ -18,6 +18,7 @@ class ModelInference:
         self.customer_name = customer_name
         self.start_timestamp = start_timestamp
         self.end_timestamp = end_timestamp
+        self.po_comitted = po_comitted
         self.llm = OpenAIClient()
 
     def preprocess_input(self, data_point: Dict) -> pd.DataFrame:
@@ -74,6 +75,7 @@ class ModelInference:
             customer_name=self.customer_name,
             start_timestamp=self.start_timestamp,
             end_timestamp=self.end_timestamp,
+            po_comitted=self.po_comitted,
         ).calculate_target_variable_from_clean_dataset(task="inference")
 
         system_prompt = """
@@ -121,13 +123,12 @@ class ModelInference:
                     {
                         "title": "Shipment may be delayed for batch number: " + batch_number,
                         "prediction": prediction,
-                        "anomaly_severity": "Warning",
-                        "messages": status_message,
-                        "process_stage": "Shipment Issues",
-                        "selected_customer": self.customer_name,
+                        "message": status_message,
+                        "customer_name": self.customer_name,
                         "vendor_id": data_point.get("vendor_id"),
-                        "purchase_order_number": data_point.get("purchase_order"),
+                        "customer_po": data_point.get("purchase_order"),
                         "sku": data_point.get("sku"),
+                        "po_comitted": self.po_comitted,
                     }
                 )
 

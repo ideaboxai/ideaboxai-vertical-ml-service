@@ -34,19 +34,13 @@ async def get_all_shipment_classifications(
 
         inference_engine = Inference(
             customer_name=customer_name,
+            po_comitted=po_comitted,
             start_timestamp=start_timestamps,
             end_timestamp=end_timestamps,
         )
         predictions = await inference_engine.get_data_for_inference_from_cube()
 
-        return JSONResponse(
-            status_code=status.HTTP_200_OK,
-            content={
-                "customer_name": customer_name,
-                "po_comitted": po_comitted,
-                "predictions": predictions,
-            },
-        )
+        return JSONResponse(status_code=status.HTTP_200_OK, content=predictions)
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
