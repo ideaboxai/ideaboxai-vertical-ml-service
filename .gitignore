@@ -45,3 +45,4 @@ mlruns/
 .env
 /data
 /models
+results/
