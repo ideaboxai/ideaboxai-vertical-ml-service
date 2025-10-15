@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+
 from src.sandhya_aqua_erp.api.v1.anomaly_detection import (
     router as anomaly_detection_router,
 )
@@ -9,6 +10,9 @@ from src.sandhya_aqua_erp.api.v1.root_cause_analysis import (
 from src.sandhya_aqua_erp.api.v1.farmer_ranking import router as farmer_ranking_router
 from src.azgems.api.v1.shipment_classification import (
     router as shipment_classification_router,
+)
+from src.azgems.api.v1.trigger_training import (
+    router as trigger_training_router,
 )
 
 
@@ -38,4 +42,9 @@ def setup_routes(app: FastAPI):
         shipment_classification_router,
         prefix="/api/v1/azgems",
         tags=["Shipment Classification"],
+    )
+    app.include_router(
+        trigger_training_router,
+        prefix="/api/v1/azgems",
+        tags=["Trigger Training"],
     )

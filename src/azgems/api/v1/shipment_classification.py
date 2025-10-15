@@ -12,7 +12,7 @@ router = APIRouter()
 
 
 @router.get("/get-all-shipment-classifications")
-def get_all_shipment_classifications(
+async def get_all_shipment_classifications(
     customer_name: str = Query("Walmart", description="Customer name"),
     start_timestamps: date = Query(
         ..., description="Start timestamp(s) in the format of 2025-11-12"
@@ -24,7 +24,7 @@ def get_all_shipment_classifications(
 ) -> JSONResponse:
     try:
         folder_path_to_check = os.path.join(
-            "models", customer_name, "logistic_regression.pkl"
+            "models", "azgems", customer_name, "model.pkl"
         )
 
         if not os.path.exists(folder_path_to_check):
@@ -37,7 +37,7 @@ def get_all_shipment_classifications(
             start_timestamp=start_timestamps,
             end_timestamp=end_timestamps,
         )
-        predictions = inference_engine.get_data_for_inference_from_cube()
+        predictions = await inference_engine.get_data_for_inference_from_cube()
 
         return JSONResponse(
             status_code=status.HTTP_200_OK,

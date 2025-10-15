@@ -2,6 +2,7 @@ import pandas as pd
 import joblib
 from typing import Dict
 from src.azgems.repositories.get_dataset import DatasetPreparation
+from src.azgems.Services.OpenAIclient import OpenAIClient
 
 
 class ModelInference:
@@ -17,6 +18,7 @@ class ModelInference:
         self.customer_name = customer_name
         self.start_timestamp = start_timestamp
         self.end_timestamp = end_timestamp
+        self.llm = OpenAIClient()
 
     def preprocess_input(self, data_point: Dict) -> pd.DataFrame:
         """
@@ -42,14 +44,26 @@ class ModelInference:
 
     def predict(self, data_point: Dict):
         """
-        Make prediction and return class label and probability.
+        Make prediction and return:
+        - class label
+        - probability
+        - feature importance
         """
+        # 1️⃣ Preprocess input
         df_scaled = self.preprocess_input(data_point)
+
+        # 2️⃣ Prediction
         prediction = self.model.predict(df_scaled)[0]
         probability = self.model.predict_proba(df_scaled)[0]
-        return prediction, probability
 
-    def get_data_for_inference_from_cube(self):
+        # 3️⃣ Feature importance
+        feature_importance = dict(
+            zip(df_scaled.columns, self.model.feature_importances_)
+        )
+
+        return prediction, probability, feature_importance
+
+    async def get_data_for_inference_from_cube(self):
         """
         Fetch data, run inference row-by-row,
         and return a list of dictionaries containing
@@ -62,18 +76,60 @@ class ModelInference:
             end_timestamp=self.end_timestamp,
         ).calculate_target_variable_from_clean_dataset(task="inference")
 
+        system_prompt = """
+        You are a helpful assistant that will help analyze the shipment issues and get the reason behind the shipment delay in a single line.
+        Just write the reason why the shipment is delayed might have been delayed in a single line.
+        Use Simple language and avoid using too many words.
+        
+        Example:
+        Delayed may be 
+        """
+        user_prompt = """
+        Here is the data:
+        {data_point}
+        Here is the prediction:
+        {prediction}
+        Here is the probability for each class:
+        {probability}
+        Here is the feature importance:
+        {feature_importance}
+        """
+
         results = []
 
         for _, row in get_data.iterrows():
             data_point = row.to_dict()
             batch_id = data_point.get("batch_in_id")
+            batch_number = data_point.get("batch_number")
 
             if batch_id is None:
                 continue  # skip if batch_in_id missing
 
-            prediction, _ = self.predict(data_point)
+            prediction, probability, feature_importance = self.predict(data_point)
+            if prediction == "delayed":
+                status_message = await self.llm.generate_response(
+                    system_prompt,
+                    user_prompt.format(
+                        data_point=data_point,
+                        prediction=prediction,
+                        probability=probability,
+                        feature_importance=feature_importance,
+                    ),
+                )
 
-            results.append({"batch_in_id": batch_id, "prediction": prediction})
+                results.append(
+                    {
+                        "title": "Shipment may be delayed for batch number: " + batch_number,
+                        "prediction": prediction,
+                        "anomaly_severity": "Warning",
+                        "messages": status_message,
+                        "process_stage": "Shipment Issues",
+                        "selected_customer": self.customer_name,
+                        "vendor_id": data_point.get("vendor_id"),
+                        "purchase_order_number": data_point.get("purchase_order"),
+                        "sku": data_point.get("sku"),
+                    }
+                )
 
         return results
 
