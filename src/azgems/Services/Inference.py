@@ -6,7 +6,9 @@ from src.azgems.Services.OpenAIclient import OpenAIClient
 
 
 class ModelInference:
-    def __init__(self, customer_name: str, start_timestamp, end_timestamp, po_comitted: str):
+    def __init__(
+        self, customer_name: str, start_timestamp, end_timestamp, po_comitted: str
+    ):
         """
         Load the saved model, scaler, encoders, and feature list.
         """
@@ -121,7 +123,9 @@ class ModelInference:
 
                 results.append(
                     {
-                        "title": "Shipment may be delayed for batch number: " + batch_number,
+                        "batch_in_id": batch_id,
+                        "title": "Shipment may be delayed for batch number: "
+                        + batch_number,
                         "prediction": prediction,
                         "message": status_message,
                         "customer_name": self.customer_name,
