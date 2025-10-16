@@ -93,5 +93,5 @@ class TrainModel:
 
 
 if __name__ == "__main__":
-    trainer = TrainModel(customer_name="Walmart")
+    trainer = TrainModel(customer_name="Walmart", po_comitted="Direct Sale")
     trainer.train_and_save_model()

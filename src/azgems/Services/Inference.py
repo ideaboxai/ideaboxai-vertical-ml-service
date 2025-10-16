@@ -3,6 +3,7 @@ import joblib
 from typing import Dict
 from src.azgems.repositories.get_dataset import DatasetPreparation
 from src.azgems.Services.OpenAIclient import OpenAIClient
+from collections import OrderedDict
 
 
 class ModelInference:
@@ -50,7 +51,7 @@ class ModelInference:
         Make prediction and return:
         - class label
         - probability
-        - feature importance
+        - sorted feature importance (descending)
         """
         # 1️⃣ Preprocess input
         df_scaled = self.preprocess_input(data_point)
@@ -59,12 +60,15 @@ class ModelInference:
         prediction = self.model.predict(df_scaled)[0]
         probability = self.model.predict_proba(df_scaled)[0]
 
-        # 3️⃣ Feature importance
+        # 3️⃣ Feature importance (sorted descending)
         feature_importance = dict(
             zip(df_scaled.columns, self.model.feature_importances_)
         )
+        feature_importance_sorted = OrderedDict(
+            sorted(feature_importance.items(), key=lambda x: x[1], reverse=True)
+        )
 
-        return prediction, probability, feature_importance
+        return prediction, probability, feature_importance_sorted
 
     async def get_data_for_inference_from_cube(self):
         """
@@ -82,11 +86,29 @@ class ModelInference:
 
         system_prompt = """
         You are a helpful assistant that will help analyze the shipment issues and get the reason behind the shipment delay in a single line.
-        Just write the reason why the shipment is delayed might have been delayed in a single line.
+        Write the reason why the shipment may have been potentially delayed in a single line considering the feature importance that is provided.
+        Instead of just relaying on the feature importance value alone, try to come up with why those features may have contributed to the delay.
         Use Simple language and avoid using too many words.
+        Here are detail of the features columns that are used for training the model:
+        - quantity_in: The quantity of the shipment
+        - seal: The seal of the shipment
+        - yield_percentage: The yield percentage of the shrimps
+        - gap_between_due_and_eta: The gap between the due date the bill must be paid and the eta (estimated time of arrival of shipment)
+        - gap_between_shipped_and_due: The gap between the shipped date(date when shipment is marked as shipped) and the due date(the date when the bill must be paid)
+        - gap_between_bill_and_shipment: The gap between the bill date(the date when the bill was issued) and the shipped date(the date when shipment is marked as shipped)
+        - gap_between_eta_shipped: The gap between the eta date(estimated time of arrival of shipment) and the shipped date(the date when shipment is marked as shipped)
+        - gap_between_eta_bill: The gap between the eta date(estimated time of arrival of shipment) and the bill date(the date when the bill was issued)
+        - due_gap: The gap between the due date(the date when the bill must be paid) and the bill date(the date when the bill was issued)
+        - responsiveness: The responsiveness of the shipment (the gap between the bill date and the shipped date)
+
+        Flow of the shipment:
+        first bill is issued along with due date, then shipment is marked as shipped, then eta is estimated, then shipment is received.
         
         Example:
-        Delayed may be 
+        Delayed may be due to the following reasons:
+        - The gap between the due date and the eta is too long
+        - The gap between the shipped date and the due date is too long
+        - The gap between the bill date and the shipped date is too long
         """
         user_prompt = """
         Here is the data:
@@ -110,6 +132,9 @@ class ModelInference:
                 continue  # skip if batch_in_id missing
 
             prediction, probability, feature_importance = self.predict(data_point)
+            print(feature_importance)
+            print(f"Probability: {probability}")
+            print(f"Feature importance: {feature_importance}")
             if prediction == "delayed":
                 status_message = await self.llm.generate_response(
                     system_prompt,
@@ -141,7 +166,12 @@ class ModelInference:
 
 if __name__ == "__main__":
     # Example usage
-    model_loader = ModelInference("models/Walmart/logistic_regression.pkl")
+    model_loader = ModelInference(
+        customer_name="Walmart",
+        start_timestamp="2025-10-13",
+        end_timestamp="2025-10-15",
+        po_comitted="Direct Sale",
+    )
 
     # Dummy data point (use actual feature names from your dataset)
     dummy_data = {

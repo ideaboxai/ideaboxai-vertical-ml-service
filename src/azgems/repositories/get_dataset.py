@@ -80,7 +80,8 @@ class DatasetPreparation:
                         "DATA_FOR_ML_SERVICES.po_commited",
                         "DATA_FOR_ML_SERVICES.quantity_in",
                         "DATA_FOR_ML_SERVICES.receipt_date",
-                        "DATA_FOR_ML_SERVICES.yield_percentage"
+                        "DATA_FOR_ML_SERVICES.yield_percentage",
+                        "DATA_FOR_ML_SERVICES.shipped_date"
                     ],
                     "filters": [
                         {{
@@ -150,19 +151,42 @@ class DatasetPreparation:
         cleaned_df = self.clean_dataset(task=task)
         cleaned_df = cleaned_df.dropna(subset=["receipt_date", "eta"])
         # converting date columns to datetime
-        date_columns = ["bill_date", "due_date", "eta"]
+        date_columns = ["bill_date", "due_date", "eta",'shipped_date']
         for col in date_columns:
             cleaned_df[col] = pd.to_datetime(
                 cleaned_df[col], format="%d %b %Y", errors="coerce"
             )
-            cleaned_df[f"{col}_year"] = cleaned_df[f"{col}"].dt.year
-            cleaned_df[f"{col}_year"] = cleaned_df[f"{col}_year"].astype("str")
-            cleaned_df[f"{col}_month"] = cleaned_df[f"{col}"].dt.month
-            cleaned_df[f"{col}_month"] = cleaned_df[f"{col}_month"].astype("str")
-            cleaned_df[f"{col}_day"] = cleaned_df[col].dt.day
-            cleaned_df[f"{col}_day"] = cleaned_df[f"{col}_day"].astype("str")
-            cleaned_df[f"{col}_weekday"] = cleaned_df[f"{col}"].dt.weekday
-            cleaned_df[f"{col}_weekday"] = cleaned_df[f"{col}_weekday"].astype("str")
+        #     cleaned_df[f"{col}_year"] = cleaned_df[f"{col}"].dt.year
+        #     cleaned_df[f"{col}_year"] = cleaned_df[f"{col}_year"].astype("str")
+        #     cleaned_df[f"{col}_month"] = cleaned_df[f"{col}"].dt.month
+        #     cleaned_df[f"{col}_month"] = cleaned_df[f"{col}_month"].astype("str")
+        #     cleaned_df[f"{col}_day"] = cleaned_df[col].dt.day
+        #     cleaned_df[f"{col}_day"] = cleaned_df[f"{col}_day"].astype("str")
+        #     cleaned_df[f"{col}_weekday"] = cleaned_df[f"{col}"].dt.weekday
+        #     cleaned_df[f"{col}_weekday"] = cleaned_df[f"{col}_weekday"].astype("str")
+        cleaned_df["gap_between_due_and_eta"] = (
+            cleaned_df["due_date"] - cleaned_df["eta"]
+        ).dt.days
+        cleaned_df["gap_between_shipped_and_due"] = (
+            cleaned_df["due_date"] - cleaned_df["shipped_date"]
+        ).dt.days
+        cleaned_df["gap_between_bill_and_shipment"] = (
+            cleaned_df["bill_date"] - cleaned_df["shipped_date"]
+        ).dt.days
+        cleaned_df["gap_between_eta_shipped"] = (
+            cleaned_df["eta"] - cleaned_df["shipped_date"]
+        ).dt.days
+        cleaned_df["gap_between_eta_bill"] = (
+            cleaned_df["eta"] - cleaned_df["bill_date"]
+        ).dt.days
+
+        cleaned_df["due_gap"] = (
+            pd.to_datetime(cleaned_df["due_date"])
+            - pd.to_datetime(cleaned_df["bill_date"])
+        ).dt.days
+        cleaned_df["responsiveness"] = (
+            cleaned_df["bill_date"] - cleaned_df["shipped_date"]
+        ).dt.days
 
         cleaned_df["receipt_date"] = pd.to_datetime(
             cleaned_df["receipt_date"], format="%d %b %Y", errors="coerce"
@@ -236,6 +260,7 @@ class DatasetPreparation:
                 "DATA_FOR_ML_SERVICES.quantity_in",
                 "DATA_FOR_ML_SERVICES.receipt_date",
                 "DATA_FOR_ML_SERVICES.yield_percentage",
+                "DATA_FOR_ML_SERVICES.shipped_date",
                 "DATA_FOR_ML_SERVICES.vendor_id",
                 "DATA_FOR_ML_SERVICES.batch_number",
                 "DATA_FOR_ML_SERVICES.sku",
