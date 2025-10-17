@@ -14,6 +14,9 @@ from src.azgems.api.v1.shipment_classification import (
 from src.azgems.api.v1.trigger_training import (
     router as trigger_training_router,
 )
+from src.azgems.api.v1.supplier_ranking import (
+    router as supplier_ranking_router,
+)
 
 
 def setup_routes(app: FastAPI):
@@ -47,4 +50,9 @@ def setup_routes(app: FastAPI):
         trigger_training_router,
         prefix="/api/v1/azgems",
         tags=["Trigger Training"],
+    )
+    app.include_router(
+        supplier_ranking_router,
+        prefix="/api/v1/azgems",
+        tags=["Rank Suppliers"],
     )
