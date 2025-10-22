@@ -31,18 +31,27 @@ class TrainModel:
         # Separate features and target
         X = df.drop(columns=[target_col])
         y = df[target_col]
+        # print(X.info())
+
+        cat_cols = [
+            "coo",
+            "shipping_port",
+            "scac",
+            "brand",
+            "manufacturer",
+        ]
 
         # Label encode categorical columns
-        for col in X.select_dtypes(include=["object"]).columns:
+        for col in cat_cols:
             le = LabelEncoder()
             X[col] = le.fit_transform(X[col].astype(str))
             self.label_encoders[col] = le
 
-        # Standardize numerical columns
-        self.scaler = StandardScaler()
-        X_scaled = pd.DataFrame(self.scaler.fit_transform(X), columns=X.columns)
-
-        return X_scaled, y
+        # # Standardize numerical columns
+        # cols_to_scale = ["quantity_in", "tariff_amount", "sku"]
+        # self.scaler = StandardScaler()
+        # X[cols_to_scale] = self.scaler.fit_transform(X[cols_to_scale])
+        return X, y
 
     def train_and_save_model(self, save_path: str = None):
         """Train the logistic regression model and save it."""
