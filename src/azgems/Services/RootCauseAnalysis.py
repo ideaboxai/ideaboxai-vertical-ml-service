@@ -122,8 +122,8 @@ class RootCauseAnalysisService:
 
             response_json = {
                 "issue": getattr(response, "issue", None),
-                "potential_cause": getattr(response, "potential_cause", None),
-                "recommendation": getattr(response, "recommendation", None),
+                "potential_causes": getattr(response, "potential_cause", None),
+                "recommended_actions": getattr(response, "recommendation", None),
             }
 
             # --- 4️⃣ Store in Redis ---
@@ -139,8 +139,8 @@ class RootCauseAnalysisService:
             return {
                 "error": str(e),
                 "issue": None,
-                "potential_cause": None,
-                "recommendation": None,
+                "potential_causes": None,
+                "recommended_actions": None,
             }
 
 

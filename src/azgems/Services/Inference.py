@@ -50,13 +50,15 @@ class ModelInference:
         # Scale numerical columns
         # df_scaled = pd.DataFrame(self.scaler.transform(df), columns=self.features)
         return df
+        # df_scaled = pd.DataFrame(self.scaler.transform(df), columns=self.features)
+        return df
 
     def predict(self, data_point: Dict):
         """
         Make prediction and return:
         - class label
         - probability
-        - sorted feature importance (descending)
+        - sorted feature importance ) (descending)
         """
         # 1️⃣ Preprocess input
         df_scaled = self.preprocess_input(data_point)
@@ -65,6 +67,7 @@ class ModelInference:
         prediction = self.model.predict(df_scaled)[0]
         probability = self.model.predict_proba(df_scaled)[0]
 
+        # 3️⃣ Feature importance (sorted descending)
         # 3️⃣ Feature importance (sorted descending)
         feature_importance = dict(
             zip(df_scaled.columns, self.model.feature_importances_)
@@ -277,6 +280,11 @@ class ModelInference:
 
         Returns:
             List[dict] where each dict contains batch_in_id, title, prediction, message (LLM result), and metadata.
+        Fetch dataset for inference from DatasetPreparation, run inference row-by-row,
+        compute SHAP + LLM explanation for 'delayed' cases, and collect results.
+
+        Returns:
+            List[dict] where each dict contains batch_in_id, title, prediction, message (LLM result), and metadata.
         """
         # 1) Load data using your repository helper (should return a DataFrame)
         get_data = DatasetPreparation(
@@ -287,12 +295,16 @@ class ModelInference:
         ).calculate_target_variable_from_clean_dataset(task="inference")
 
         # Short system prompt for the LLM is embedded in explain_delay_with_shap_and_llm
+        # Short system prompt for the LLM is embedded in explain_delay_with_shap_and_llm
         results = []
 
         # Iterate rows and perform inference + explanation
+        # Iterate rows and perform inference + explanation
         for _, row in get_data.iterrows():
             # Convert row to dict and remove target label if present
+            # Convert row to dict and remove target label if present
             data_point = row.to_dict()
+            data_point.pop("shipment_classified", None)
             data_point.pop("shipment_classified", None)
             batch_id = data_point.get("batch_in_id")
             batch_number = data_point.get("batch_number", "Unknown")
