@@ -3,10 +3,10 @@ import pandas as pd
 from typing import Literal
 
 
-def fill_unknown_for_object_cols(df: pd.DataFrame) -> pd.DataFrame:
-    for col in df.select_dtypes(include=["object"]).columns:
-        df[col] = df[col].replace(r"^\s*$", "unknown", regex=True)
-    return df
+# def fill_unknown_for_object_cols(df: pd.DataFrame) -> pd.DataFrame:
+#     for col in df.select_dtypes(include=["object"]).columns:
+#         df[col] = df[col].replace(r"^\s*$", "unknown", regex=True)
+#     return df
 
 
 class DatasetPreparation:
@@ -14,7 +14,7 @@ class DatasetPreparation:
         self,
         customer_name="Walmart",
         po_comitted="Direct Sale",
-        threshold=5,
+        threshold=7,
         start_timestamp=None,
         end_timestamp=None,
     ):
@@ -68,35 +68,31 @@ class DatasetPreparation:
         # client = get_clickhouse_client()
         query_for_cubejs = """{{
                     "dimensions": [
-                        "DATA_FOR_ML_SERVICES.seal",
-                        "DATA_FOR_ML_SERVICES.eta",
-                        "DATA_FOR_ML_SERVICES.batch_in_id",
-                        "DATA_FOR_ML_SERVICES.bill_date",
-                        "DATA_FOR_ML_SERVICES.created_time",
-                        "DATA_FOR_ML_SERVICES.customer_name",
-                        "DATA_FOR_ML_SERVICES.customs_broker",
-                        "DATA_FOR_ML_SERVICES.due_date",
-                        "DATA_FOR_ML_SERVICES.ocean_freight",
-                        "DATA_FOR_ML_SERVICES.po_commited",
-                        "DATA_FOR_ML_SERVICES.quantity_in",
-                        "DATA_FOR_ML_SERVICES.receipt_date",
-                        "DATA_FOR_ML_SERVICES.yield_percentage"
+                            "DATA_FOR_ML_SERVICES.bill_date",
+                            "DATA_FOR_ML_SERVICES.brand",
+                            "DATA_FOR_ML_SERVICES.coo",
+                            "DATA_FOR_ML_SERVICES.due_date",
+                            "DATA_FOR_ML_SERVICES.eta",
+                            "DATA_FOR_ML_SERVICES.manufacturer",
+                            "DATA_FOR_ML_SERVICES.payment_terms",
+                            "DATA_FOR_ML_SERVICES.quantity_in",
+                            "DATA_FOR_ML_SERVICES.receipt_date",
+                            "DATA_FOR_ML_SERVICES.scac",
+                            "DATA_FOR_ML_SERVICES.shipping_port",
+                            "DATA_FOR_ML_SERVICES.sku",
+                            "DATA_FOR_ML_SERVICES.tariff_amount",
+                            "DATA_FOR_ML_SERVICES.shipped_date"
                     ],
                     "filters": [
                         {{
                             "values": ["{customer_name}"],
                             "member": "DATA_FOR_ML_SERVICES.customer_name",
                             "operator": "contains"
-                        }},
-                        {{
-                            "values": ["{po_comitted}"],
-                            "member": "DATA_FOR_ML_SERVICES.po_commited",
-                            "operator": "notContains"
                         }}
                     ],
                     "measures": []
                 }}""".format(
-            customer_name=self.customer_name, po_comitted=self.po_comitted
+            customer_name=self.customer_name
         )
 
         client = get_cubejs_client()
@@ -124,59 +120,57 @@ class DatasetPreparation:
         if dataset.empty:
             raise Exception(f"No data available for {task}.")
         # need to add other logics for cleaning
-        dataset["yield_percentage"] = (
-            dataset["yield_percentage"]
-            .astype(str)
-            .str.strip()
-            .replace("", "0")
-            .str.replace("%", "", regex=False)
-            .fillna("0")
-            .astype(float)
-        )
+        print("Initial dataset shape:", dataset.shape)
+        print("The number of duplicate rows:", dataset.duplicated().sum())
+        dataset.drop_duplicates(inplace=True)
+        # Replace empty strings or whitespace-only values with NaN first
+        dataset["shipping_port"].replace(r"^\s*$", pd.NA, regex=True, inplace=True)
+        dataset["tariff_amount"].replace(r"^\s*$", pd.NA, regex=True, inplace=True)
+        # dataset["customs_broker"].replace(r"^\s*$", pd.NA, regex=True, inplace=True)
+        dataset["receipt_date"].replace(r"^\s*$", pd.NA, regex=True, inplace=True)
+
+        # Then fill both NaN and now-empty ones
+        dataset["shipping_port"].fillna("Unknown", inplace=True)
+        dataset["tariff_amount"].fillna(0, inplace=True)
+        # dataset["customs_broker"].fillna("Unknown", inplace=True)
+
         dataset["quantity_in"] = dataset["quantity_in"].astype(float)
-        dataset["ocean_freight"] = (
-            dataset["ocean_freight"]
-            .astype(str)
-            .str.strip()
-            .replace("", "0")
-            .fillna("0")
-            .astype(float)
-        )
+        dataset["tariff_amount"] = dataset["tariff_amount"].astype(float)
+        dataset["sku"] = dataset["sku"].astype(float)
         return dataset
 
     def calculate_target_variable_from_clean_dataset(
         self, task: Literal["training", "inference"] = "training"
     ):
         cleaned_df = self.clean_dataset(task=task)
-        cleaned_df = cleaned_df.dropna(subset=["receipt_date", "eta"])
+        cleaned_df = cleaned_df.dropna(subset=["receipt_date", "eta"]) if task == "training" else cleaned_df
         # converting date columns to datetime
-        date_columns = ["bill_date", "due_date", "eta"]
+        date_columns = ["bill_date", "due_date", "eta", "shipped_date", "receipt_date"]
         for col in date_columns:
             cleaned_df[col] = pd.to_datetime(
                 cleaned_df[col], format="%d %b %Y", errors="coerce"
             )
-            cleaned_df[f"{col}_year"] = cleaned_df[f"{col}"].dt.year
-            cleaned_df[f"{col}_year"] = cleaned_df[f"{col}_year"].astype("str")
-            cleaned_df[f"{col}_month"] = cleaned_df[f"{col}"].dt.month
-            cleaned_df[f"{col}_month"] = cleaned_df[f"{col}_month"].astype("str")
-            cleaned_df[f"{col}_day"] = cleaned_df[col].dt.day
-            cleaned_df[f"{col}_day"] = cleaned_df[f"{col}_day"].astype("str")
-            cleaned_df[f"{col}_weekday"] = cleaned_df[f"{col}"].dt.weekday
-            cleaned_df[f"{col}_weekday"] = cleaned_df[f"{col}_weekday"].astype("str")
 
-        cleaned_df["receipt_date"] = pd.to_datetime(
-            cleaned_df["receipt_date"], format="%d %b %Y", errors="coerce"
-        )
-        cleaned_df["shipment_delay_days"] = (
-            cleaned_df["receipt_date"] - cleaned_df["eta"]
+        cleaned_df["estimated_travel_duration"] = (
+            cleaned_df["eta"] - cleaned_df["shipped_date"]
         ).dt.days
-        cleaned_df["shipment_classified"] = cleaned_df["shipment_delay_days"].apply(
-            lambda x: "on_time" if x <= self.threshold_for_delay else "delayed"
-        )
-        cleaned_df.drop(
-            columns=date_columns + ["shipment_delay_days", "receipt_date"], inplace=True
-        )
-        cleaned_df = fill_unknown_for_object_cols(cleaned_df)
+        cleaned_df["payment_window"] = (
+            cleaned_df["due_date"] - cleaned_df["bill_date"]
+        ).dt.days
+        cleaned_df["gap_eta_due"] = (cleaned_df["due_date"] - cleaned_df["eta"]).dt.days
+
+        if task == "training":
+            cleaned_df["shipment_delay_days"] = (
+                cleaned_df["receipt_date"] - cleaned_df["eta"]
+            ).dt.days
+            cleaned_df["shipment_classified"] = cleaned_df["shipment_delay_days"].apply(
+                lambda x: "on_time" if x <= self.threshold_for_delay else "delayed"
+            )
+            cleaned_df.drop(
+                columns=date_columns + ["shipment_delay_days", "receipt_date"], inplace=True
+            )
+        # cleaned_df = fill_unknown_for_object_cols(cleaned_df)
+        # print(cleaned_df.info())
         return cleaned_df
 
     def get_necessary_dataset_for_inference(self) -> pd.DataFrame:
@@ -221,51 +215,47 @@ class DatasetPreparation:
         #             ORDER BY bni.created_time DESC
         #     """
         # client = get_clickhouse_client()
-        query_for_cubejs = """{{
-                        "dimensions": [
-                "DATA_FOR_ML_SERVICES.seal",
-                "DATA_FOR_ML_SERVICES.eta",
-                "DATA_FOR_ML_SERVICES.batch_in_id",
-                "DATA_FOR_ML_SERVICES.bill_date",
-                "DATA_FOR_ML_SERVICES.created_time",
-                "DATA_FOR_ML_SERVICES.customer_name",
-                "DATA_FOR_ML_SERVICES.customs_broker",
-                "DATA_FOR_ML_SERVICES.due_date",
-                "DATA_FOR_ML_SERVICES.ocean_freight",
-                "DATA_FOR_ML_SERVICES.po_commited",
-                "DATA_FOR_ML_SERVICES.quantity_in",
-                "DATA_FOR_ML_SERVICES.receipt_date",
-                "DATA_FOR_ML_SERVICES.yield_percentage",
-                "DATA_FOR_ML_SERVICES.vendor_id",
-                "DATA_FOR_ML_SERVICES.batch_number",
-                "DATA_FOR_ML_SERVICES.sku",
-                "DATA_FOR_ML_SERVICES.purchase_order"
-            ],
-            "filters": [
-                {{
-                    "values": ["{customer_name}"],
-                    "member": "DATA_FOR_ML_SERVICES.customer_name",
-                    "operator": "contains"
-                }},
-                {{
-                    "values": ["{po_comitted}"],
-                    "member": "DATA_FOR_ML_SERVICES.po_commited",
-                    "operator": "notContains"
-                }},
-                {{
-                    "values": ["{start_timestamp}", "{end_timestamp}"],
-                    "member": "DATA_FOR_ML_SERVICES.created_time",
-                    "operator": "inDateRange"
-                }}
-            ],
-            "measures": []
-        }}""".format(
+        query_for_cubejs = """
+                    {{
+                    "dimensions": [
+                        "DATA_FOR_ML_SERVICES.bill_date",
+                        "DATA_FOR_ML_SERVICES.brand",
+                        "DATA_FOR_ML_SERVICES.coo",
+                        "DATA_FOR_ML_SERVICES.due_date",
+                        "DATA_FOR_ML_SERVICES.eta",
+                        "DATA_FOR_ML_SERVICES.manufacturer",
+                        "DATA_FOR_ML_SERVICES.payment_terms",
+                        "DATA_FOR_ML_SERVICES.quantity_in",
+                        "DATA_FOR_ML_SERVICES.receipt_date",
+                        "DATA_FOR_ML_SERVICES.scac",
+                        "DATA_FOR_ML_SERVICES.shipping_port",
+                        "DATA_FOR_ML_SERVICES.sku",
+                        "DATA_FOR_ML_SERVICES.tariff_amount",
+                        "DATA_FOR_ML_SERVICES.shipped_date",
+                        "DATA_FOR_ML_SERVICES.batch_in_id",
+                        "DATA_FOR_ML_SERVICES.vendor_id",
+                        "DATA_FOR_ML_SERVICES.batch_number",
+                        "DATA_FOR_ML_SERVICES.purchase_order"
+                    ],
+                    "filters": [
+                        {{
+                        "values": ["{customer_name}"],
+                        "member": "DATA_FOR_ML_SERVICES.customer_name",
+                        "operator": "contains"
+                        }}
+                    ],
+                    "timeDimensions": [
+                        {{
+                        "dimension": "DATA_FOR_ML_SERVICES.created_time",
+                        "dateRange": ["{start_timestamp}", "{end_timestamp}"]
+                        }}
+                    ]
+                    }}
+                    """.format(
             customer_name=self.customer_name,
-            po_comitted=self.po_comitted,
             start_timestamp=self.start_timestamp,
             end_timestamp=self.end_timestamp,
         )
-
         client = get_cubejs_client()
         try:
             result = client.api_call(

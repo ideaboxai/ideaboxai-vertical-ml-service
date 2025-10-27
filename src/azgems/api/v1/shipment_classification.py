@@ -29,6 +29,7 @@ async def get_all_shipment_classifications(
 
         if not os.path.exists(folder_path_to_check):
             logger.info("Weights Not Found...Training the Model for the customers")
+            print("Weights Not Found...Training the Model for the customers")
             trainer = TrainModel(customer_name=customer_name, po_comitted=po_comitted)
             trainer.train_and_save_model()
 
