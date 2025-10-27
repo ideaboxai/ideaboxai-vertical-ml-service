@@ -41,15 +41,42 @@ class OpenAIClient:
             logger.exception("Error generating OpenAI response")
             raise RuntimeError(f"OpenAI API Error: {str(e)}")
 
+    async def generate_formatted_response(
+        self,
+        system_prompt: str,
+        user_prompt: str,
+        response_format,
+        temperature: float = 0.7,
+    ) -> str | None:
+        try:
+            response = await self.client.chat.completions.parse(
+                model=self.model,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt},
+                ],
+                temperature=temperature,
+                response_format=response_format,
+            )
+            return response.choices[0].message.parsed
+
+        except Exception as e:
+            logger.exception("Error generating OpenAI response")
+            raise RuntimeError(f"OpenAI API Error: {str(e)}")
+
+
 if __name__ == "__main__":
     import os
     from dotenv import load_dotenv
     import asyncio
+
     load_dotenv()
 
     client = OpenAIClient()
-    response = asyncio.run(client.generate_response(
-        system_prompt="You are a helpful assistant.",
-        user_prompt="What is the capital of France?",
-    ))
+    response = asyncio.run(
+        client.generate_response(
+            system_prompt="You are a helpful assistant.",
+            user_prompt="What is the capital of France?",
+        )
+    )
     print(response)
