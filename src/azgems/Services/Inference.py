@@ -50,13 +50,15 @@ class ModelInference:
         # Scale numerical columns
         # df_scaled = pd.DataFrame(self.scaler.transform(df), columns=self.features)
         return df
+        # df_scaled = pd.DataFrame(self.scaler.transform(df), columns=self.features)
+        return df
 
     def predict(self, data_point: Dict):
         """
         Make prediction and return:
         - class label
         - probability
-        - sorted feature importance (descending)
+        - sorted feature importance ) (descending)
         """
         # 1️⃣ Preprocess input
         df_scaled = self.preprocess_input(data_point)
@@ -65,6 +67,7 @@ class ModelInference:
         prediction = self.model.predict(df_scaled)[0]
         probability = self.model.predict_proba(df_scaled)[0]
 
+        # 3️⃣ Feature importance (sorted descending)
         # 3️⃣ Feature importance (sorted descending)
         feature_importance = dict(
             zip(df_scaled.columns, self.model.feature_importances_)
@@ -86,9 +89,13 @@ class ModelInference:
         if background is not None:
             try:
                 background = background.apply(pd.to_numeric, errors="ignore")
-                non_numeric_cols = background.select_dtypes(include=["object"]).columns.tolist()
+                non_numeric_cols = background.select_dtypes(
+                    include=["object"]
+                ).columns.tolist()
                 if len(non_numeric_cols) > 0:
-                    print(f"⚠️ Warning: background data still has non-numeric columns: {non_numeric_cols}")
+                    print(
+                        f"⚠️ Warning: background data still has non-numeric columns: {non_numeric_cols}"
+                    )
             except Exception as e:
                 print(f"⚠️ Could not fully convert background to numeric: {e}")
 
@@ -273,6 +280,11 @@ class ModelInference:
 
         Returns:
             List[dict] where each dict contains batch_in_id, title, prediction, message (LLM result), and metadata.
+        Fetch dataset for inference from DatasetPreparation, run inference row-by-row,
+        compute SHAP + LLM explanation for 'delayed' cases, and collect results.
+
+        Returns:
+            List[dict] where each dict contains batch_in_id, title, prediction, message (LLM result), and metadata.
         """
         # 1) Load data using your repository helper (should return a DataFrame)
         get_data = DatasetPreparation(
@@ -283,12 +295,16 @@ class ModelInference:
         ).calculate_target_variable_from_clean_dataset(task="inference")
 
         # Short system prompt for the LLM is embedded in explain_delay_with_shap_and_llm
+        # Short system prompt for the LLM is embedded in explain_delay_with_shap_and_llm
         results = []
 
         # Iterate rows and perform inference + explanation
+        # Iterate rows and perform inference + explanation
         for _, row in get_data.iterrows():
             # Convert row to dict and remove target label if present
+            # Convert row to dict and remove target label if present
             data_point = row.to_dict()
+            data_point.pop("shipment_classified", None)
             data_point.pop("shipment_classified", None)
             batch_id = data_point.get("batch_in_id")
             batch_number = data_point.get("batch_number", "Unknown")
@@ -297,7 +313,9 @@ class ModelInference:
             if sorted(list(data_point.keys())) != sorted(list(self.features)):
                 # Warn but continue; preprocess_input expects self.features.
                 # If mismatch is expected, adapt this check or ensure DatasetPreparation yields correct columns.
-                print("Warning: data point keys differ from model features; proceeding anyway.")
+                print(
+                    "Warning: data point keys differ from model features; proceeding anyway."
+                )
 
             # 1) Basic prediction & feature importance
             prediction, probability, feature_importance = self.predict(data_point)
@@ -306,12 +324,15 @@ class ModelInference:
 
             # 2) If delayed, compute SHAP + call LLM for a one-line causal reason
             if str(prediction).lower() in ("delayed", "delay", "1", "true", "yes"):
-                explanation = await self.explain_delay_with_shap_and_llm(data_point, top_n=5)
+                explanation = await self.explain_delay_with_shap_and_llm(
+                    data_point, top_n=5
+                )
 
                 results.append(
                     {
                         "batch_in_id": batch_id,
-                        "title": "Shipment may be delayed for batch number: " + batch_number,
+                        "title": "Shipment may be delayed for batch number: "
+                        + batch_number,
                         "prediction": explanation["prediction"],
                         "message": explanation["llm_message"],
                         "customer_name": self.customer_name,
@@ -326,7 +347,7 @@ class ModelInference:
                 )
 
         return results
-    
+
     # async def get_data_for_inference_from_cube(self):
     #     """
     #     Fetch data, run inference row-by-row,
@@ -360,7 +381,7 @@ class ModelInference:
 
     #     Flow of the shipment:
     #     first bill is issued along with due date, then shipment is marked as shipped, then eta is estimated, then shipment is received.
-        
+
     #     Example:
     #     Delayed may be due to the following reasons:
     #     - The gap between the due date and the eta is too long
@@ -420,86 +441,6 @@ class ModelInference:
     #             )
 
     #     return results
-        for _, row in get_data.iterrows():
-            data_point = row.to_dict()
-            data_point.pop("shipment_classified", None)
-            batch_id = data_point.get("batch_in_id")
-            batch_number = data_point.get("batch_number", "Unknown")
-            print(sorted(list(data_point.keys())) == sorted(list(self.features)))
-
-            # if batch_id is None:
-            #     continue  # skip if batch_in_id missing
-
-            prediction, probability, feature_importance = self.predict(data_point)
-            print(feature_importance)
-            print(f"The prediction is: {prediction}")
-            if prediction == "delayed":
-                status_message = await self.llm.generate_response(
-                    system_prompt,
-                    user_prompt.format(
-                        data_point=data_point,
-                        prediction=prediction,
-                        probability=probability,
-                        feature_importance=feature_importance,
-                    ),
-                )
-
-                results.append(
-                    {
-                        "batch_in_id": batch_id,
-                        "title": "Shipment may be delayed for batch number: "
-                        + batch_number,
-                        "prediction": prediction,
-                        "message": status_message,
-                        "customer_name": self.customer_name,
-                        "vendor_id": data_point.get("vendor_id"),
-                        "customer_po": data_point.get("purchase_order"),
-                        "sku": data_point.get("sku"),
-                        "po_comitted": self.po_comitted,
-                    }
-                )
-
-        return results
-        for _, row in get_data.iterrows():
-            data_point = row.to_dict()
-            data_point.pop("shipment_classified", None)
-            batch_id = data_point.get("batch_in_id")
-            batch_number = data_point.get("batch_number", "Unknown")
-            print(sorted(list(data_point.keys())) == sorted(list(self.features)))
-
-            # if batch_id is None:
-            #     continue  # skip if batch_in_id missing
-
-            prediction, probability, feature_importance = self.predict(data_point)
-            print(feature_importance)
-            print(f"The prediction is: {prediction}")
-            if prediction == "delayed":
-                status_message = await self.llm.generate_response(
-                    system_prompt,
-                    user_prompt.format(
-                        data_point=data_point,
-                        prediction=prediction,
-                        probability=probability,
-                        feature_importance=feature_importance,
-                    ),
-                )
-
-                results.append(
-                    {
-                        "batch_in_id": batch_id,
-                        "title": "Shipment may be delayed for batch number: "
-                        + batch_number,
-                        "prediction": prediction,
-                        "message": status_message,
-                        "customer_name": self.customer_name,
-                        "vendor_id": data_point.get("vendor_id"),
-                        "customer_po": data_point.get("purchase_order"),
-                        "sku": data_point.get("sku"),
-                        "po_comitted": self.po_comitted,
-                    }
-                )
-
-        return results
 
 
 if __name__ == "__main__":

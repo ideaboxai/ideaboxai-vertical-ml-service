@@ -1,7 +1,8 @@
 import os
 import logging
 from openai import AsyncOpenAI
-from typing import List, Optional
+from typing import Any, List, Optional, Dict
+from langfuse import Langfuse
 
 logger = logging.getLogger(__name__)
 
@@ -16,6 +17,36 @@ class OpenAIClient:
 
         self.client = AsyncOpenAI(api_key=self.api_key)
         self.model = model
+        self.langfuse = Langfuse(
+            public_key=os.getenv("LANGFUSE_PUBLIC_KEY"),
+            secret_key=os.getenv("LANGFUSE_SECRET_KEY"),
+            host=os.getenv("LANGFUSE_HOST"),
+        )
+
+    def _log_usage(self, span, response):
+        metadata: Dict[str, Any] = {}
+        if response.usage:
+            metadata.update(
+                {
+                    "prompt_tokens": response.usage.prompt_tokens,
+                    "completion_tokens": response.usage.completion_tokens,
+                    "total_tokens": response.usage.total_tokens,
+                }
+            )
+        span.update(output=response.choices[0].message.content, metadata=metadata)
+        self.langfuse.update_current_generation(
+            usage_details={
+                "input": response.usage.prompt_tokens if response.usage else 0,
+                "output": response.usage.completion_tokens if response.usage else 0,
+                "total": response.usage.total_tokens if response.usage else 0,
+                "prompt_tokens": response.usage.prompt_tokens if response.usage else 0,
+                "completion_tokens": (
+                    response.usage.completion_tokens if response.usage else 0
+                ),
+                "total_tokens": response.usage.total_tokens if response.usage else 0,
+            },
+            model=self.model,
+        )
 
     async def generate_response(
         self, system_prompt: str, user_prompt: str, temperature: float = 0.7
@@ -27,15 +58,18 @@ class OpenAIClient:
         :return: model response text
         """
         try:
-            response = await self.client.chat.completions.create(
-                model=self.model,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt},
-                ],
-                temperature=temperature,
-            )
-            return response.choices[0].message.content
+            with self.langfuse.start_as_current_span(name="Azgems Recommender") as span:
+                span.update(input=system_prompt + "\n\n" + user_prompt)
+                response = await self.client.chat.completions.create(
+                    model=self.model,
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": user_prompt},
+                    ],
+                    temperature=temperature,
+                )
+                self._log_usage(span, response)
+                return response.choices[0].message.content
 
         except Exception as e:
             logger.exception("Error generating OpenAI response")
@@ -49,16 +83,19 @@ class OpenAIClient:
         temperature: float = 0.7,
     ) -> str | None:
         try:
-            response = await self.client.chat.completions.parse(
-                model=self.model,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt},
-                ],
-                temperature=temperature,
-                response_format=response_format,
-            )
-            return response.choices[0].message.parsed
+            with self.langfuse.start_as_current_span(name="Azgems Recommender") as span:
+                span.update(input=system_prompt + "\n\n" + user_prompt)
+                response = await self.client.chat.completions.parse(
+                    model=self.model,
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": user_prompt},
+                    ],
+                    temperature=temperature,
+                    response_format=response_format,
+                )
+                self._log_usage(span, response)
+                return response.choices[0].message.parsed
 
         except Exception as e:
             logger.exception("Error generating OpenAI response")
