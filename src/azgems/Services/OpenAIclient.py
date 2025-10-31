@@ -5,7 +5,8 @@ from typing import Any, List, Optional, Dict
 from langfuse import Langfuse
 
 logger = logging.getLogger(__name__)
-
+from dotenv import load_dotenv
+load_dotenv()
 
 class OpenAIClient:
     """Generic OpenAI client for chat and embedding operations."""

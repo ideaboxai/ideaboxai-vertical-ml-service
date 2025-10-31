@@ -224,9 +224,136 @@ class DatasetPreparation:
         return dataset
 
     def get_necessary_dataset_for_inference(self) -> pd.DataFrame:
-        return pd.DataFrame()
+        inference_data_query = """ 
+                SELECT 
+                    -- 📦 Core dates (converted)
+                    parseDateTimeBestEffortOrNull(b.shipped_date) AS shipped_date,
+                    parseDateTimeBestEffortOrNull(b.eta) AS eta,
+                    parseDateTimeBestEffortOrNull(b.receipt_date) AS receipt_date,
+
+                    -- ⏱ Derived timing features
+                    round(GREATEST(
+                        dateDiff('day', 
+                            toDate(parseDateTimeBestEffortOrNull(b.eta)), 
+                            toDate(parseDateTimeBestEffortOrNull(b.receipt_date))
+                        ), 
+                    0), 2) AS delay_days,
+
+                    round(dateDiff('day', 
+                        toDate(parseDateTimeBestEffortOrNull(b.shipped_date)), 
+                        toDate(parseDateTimeBestEffortOrNull(b.receipt_date))
+                    ), 2) AS shipping_duration_days,
+
+                    round(dateDiff('day', 
+                        toDate(parseDateTimeBestEffortOrNull(p.purchase_order_date)), 
+                        toDate(parseDateTimeBestEffortOrNull(b.shipped_date))
+                    ), 2) AS lead_time_days,
+
+                    (parseDateTimeBestEffortOrNull(b.receipt_date) < parseDateTimeBestEffortOrNull(b.eta)) AS is_early_delivery,
+
+                    -- 🌍 Shipping details
+                    b.coo AS coo,
+                    b.scac AS scac,
+                    round(toFloat64OrNull(b.tariff_amount), 2) AS tariff_amount,
+                    round(toFloat64OrNull(b.ocean_freight), 2) AS ocean_freight,
+                    p.delivery_terms AS delivery_terms,
+                    p.shipment_terms AS po_shipment_terms,
+                    p.tariff_type AS tariff_type,
+
+                    -- 💰 Cost metrics
+                    p.total_bcy AS total_bcy,
+
+                    -- 📊 Product info
+                    round(toFloat64OrNull(bni.quantity_in), 2) AS quantity_in,
+                    i.sku AS item_sku,
+                    i.brand AS item_brand,
+                    i.manufacturer AS item_manufacturer,
+                    i.product_category AS item_product_category,
+                    i.size AS item_size,
+
+                    -- 🏢 Vendor info
+                    v.vendor_name AS vendor_name,
+
+                    -- 🧮 🔁 Vendor-level aggregates (joined)
+                    round(vs.vendor_avg_delay_days, 2) AS vendor_avg_delay_days,
+                    vs.vendor_shipments,
+                    round(vs.vendor_on_time_rate, 2) AS vendor_on_time_rate,
+                    round(vs.vendor_p50_delay_days, 2) AS vendor_p50_delay_days,
+                    round(vs.vendor_p90_delay_days, 2) AS vendor_p90_delay_days
+
+                FROM zoho_books_analytics.batch_number_in AS bni
+                INNER JOIN zoho_books_analytics.bills AS b 
+                    ON bni.bill_id = b.bill_id 
+                INNER JOIN zoho_books_analytics.bill_item AS bi 
+                    ON b.bill_id = bi.bill_id
+                INNER JOIN zoho_books_analytics.purchase_orders AS p 
+                    ON b.purchase_order = p.purchase_order_number  
+                INNER JOIN zoho_books_analytics.items AS i 
+                    ON bi.product_id = i.item_id 
+                INNER JOIN zoho_books_analytics.sales_orders AS so 
+                    ON p.reference_number = so.sales_order 
+                INNER JOIN zoho_books_analytics.customers AS c 
+                    ON c.customer_id = so.customer_id
+                INNER JOIN zoho_books_analytics.customer_item_mapping AS ci 
+                    ON i.sku = ci.az_sku 
+                INNER JOIN zoho_books_analytics.vendors AS v 
+                    ON v.vendor_id = b.vendor_id
+
+                /* ✅ Inline vendor-level aggregate */
+                LEFT JOIN
+                (
+                    SELECT
+                        v.vendor_id AS vendor_id,
+                        round(avg(GREATEST(
+                                dateDiff('day',
+                                    toDate(parseDateTimeBestEffortOrNull(b.eta)),
+                                    toDate(parseDateTimeBestEffortOrNull(b.receipt_date))
+                                ), 0)), 2) AS vendor_avg_delay_days,
+                        count() AS vendor_shipments,
+                        round(avg(GREATEST(
+                                dateDiff('day',
+                                    toDate(parseDateTimeBestEffortOrNull(b.eta)),
+                                    toDate(parseDateTimeBestEffortOrNull(b.receipt_date))
+                                ), 0) = 0), 2) AS vendor_on_time_rate,
+                        round(quantileExact(0.5)(GREATEST(
+                                dateDiff('day',
+                                    toDate(parseDateTimeBestEffortOrNull(b.eta)),
+                                    toDate(parseDateTimeBestEffortOrNull(b.receipt_date))
+                                ), 0)), 2) AS vendor_p50_delay_days,
+                        round(quantileExact(0.9)(GREATEST(
+                                dateDiff('day',
+                                    toDate(parseDateTimeBestEffortOrNull(b.eta)),
+                                    toDate(parseDateTimeBestEffortOrNull(b.receipt_date))
+                                ), 0)), 2) AS vendor_p90_delay_days
+                    FROM zoho_books_analytics.bills AS b
+                    INNER JOIN zoho_books_analytics.purchase_orders AS p
+                        ON b.purchase_order = p.purchase_order_number
+                    INNER JOIN zoho_books_analytics.sales_orders AS so
+                        ON p.reference_number = so.sales_order
+                    INNER JOIN zoho_books_analytics.customers AS c
+                        ON c.customer_id = so.customer_id
+                    INNER JOIN zoho_books_analytics.vendors AS v
+                        ON v.vendor_id = b.vendor_id
+                    WHERE
+                        c.customer_name LIKE 'Walmart%'
+                        AND b.shipped_date IS NOT NULL
+                    GROUP BY v.vendor_id
+                ) AS vs
+                    ON vs.vendor_id = v.vendor_id
+
+                WHERE 
+                    c.customer_name LIKE 'Walmart%' 
+                    AND b.shipped_date IS NOT NULL
+                    AND bni.created_time BETWEEN '2025-08-01' AND '2025-10-01'
+                ORDER BY bni.created_time DESC
+                """
+        client = get_clickhouse_client()
+        result = client.query(inference_data_query)
+
+        inference_dataset_df = pd.DataFrame(result.result_rows, columns=[col for col in result.column_names])
+        return inference_dataset_df
 
 if __name__ == "__main__":
     dataset_preparation = DatasetPreparation()
-    dataset = dataset_preparation.clean_dataset()   # testing for the logic of training dataset
+    dataset = dataset_preparation.clean_dataset(method='inference')   # testing for the logic of training dataset
     print(dataset.head())
