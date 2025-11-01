@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, status, Query
 from fastapi.responses import JSONResponse
 from src.azgems.Services.TrainModel import TrainModel
-from src.azgems.Services.Inference import ModelInference as Inference
+from src.azgems.Services.Inference import Inference
 from datetime import date
 import logging
 import os
@@ -30,16 +30,15 @@ async def get_all_shipment_classifications(
         if not os.path.exists(folder_path_to_check):
             logger.info("Weights Not Found...Training the Model for the customers")
             print("Weights Not Found...Training the Model for the customers")
-            trainer = TrainModel(customer_name=customer_name, po_comitted=po_comitted)
+            trainer = TrainModel(customer_name=customer_name)
             trainer.train_and_save_model()
 
         inference_engine = Inference(
             customer_name=customer_name,
-            po_comitted=po_comitted,
             start_timestamp=start_timestamps,
             end_timestamp=end_timestamps,
         )
-        predictions = await inference_engine.get_data_for_inference_from_cube()
+        predictions = await inference_engine.run_batch_and_format_json()
 
         return JSONResponse(status_code=status.HTTP_200_OK, content=predictions)
 

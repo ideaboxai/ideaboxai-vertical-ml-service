@@ -1,479 +1,839 @@
-import json
-from collections import OrderedDict
-from typing import Dict, Tuple, List
-
 import joblib
 import numpy as np
 import pandas as pd
+from pathlib import Path
+from typing import Union, Dict, List, Optional
 import shap
+import json
+import asyncio
+from pydantic import BaseModel, Field
 
-from src.azgems.repositories.get_dataset import DatasetPreparation
 from src.azgems.Services.OpenAIclient import OpenAIClient
 
 
-class ModelInference:
+# Constants matching TrainModel.py
+DELAY_THRESHOLD = 5  # for derived classification
+USE_LOG_TARGET = True  # log1p transform was used during training
+
+
+class ShipmentExplanation(BaseModel):
+    """Pydantic model for structured LLM explanations."""
+
+    reasonings: List[str] = Field(
+        ...,
+        description="List of reasonings for the predicted shipment delay. First item should contain how many days of delay was predicted.",
+    )
+
+
+class Inference:
+    """
+    Inference class for loading trained models and making predictions.
+
+    The model pipeline includes preprocessing, so raw data can be passed directly.
+    """
+
     def __init__(
-        self, customer_name: str, start_timestamp, end_timestamp, po_comitted: str
+        self,
+        customer_name: str,
+        model_path: Optional[
+            str
+        ] = "models/azgems/Walmart/ShipmentClassificationModel.joblib",
+        start_timestamp: Optional[str] = None,
+        end_timestamp: Optional[str] = None,
+        enable_shap: bool = True,
+        enable_llm_explanations: bool = True,
     ):
         """
-        Load the saved model, scaler, encoders, and feature list.
+        Initialize the Inference class.
+
+        Args:
+            customer_name: Name of the customer (used to construct default model path)
+            model_path: Optional custom path to the model. If None, uses default:
+                       models/azgems/{customer_name}/ShipmentClassificationModel.joblib
+            enable_shap: Whether to enable SHAP explainer (default: True)
+            enable_llm_explanations: Whether to enable LLM-based explanations (default: True)
         """
-        saved = joblib.load(f"models/azgems/{customer_name}/model.pkl")
-        self.model = saved["model"]
-        self.scaler = saved["scaler"]
-        self.encoders = saved["encoders"]
-        self.features = saved["features"]
         self.customer_name = customer_name
+        self.model = None
+        self.model_path = model_path
         self.start_timestamp = start_timestamp
         self.end_timestamp = end_timestamp
-        self.po_comitted = po_comitted
-        self.llm = OpenAIClient()
+        self.explainer = None
+        self.enable_shap = enable_shap
+        self.enable_llm_explanations = enable_llm_explanations
 
-    def preprocess_input(self, data_point: Dict) -> pd.DataFrame:
-        """
-        Convert a single data point dict into a preprocessed DataFrame
-        ready for model prediction.
-        """
-        # Convert to DataFrame
-        df = pd.DataFrame([data_point], columns=self.features)
+        # Determine model path
+        if model_path is None:
+            self.model_path = (
+                Path("models")
+                / "azgems"
+                / customer_name
+                / "ShipmentClassificationModel.joblib"
+            )
+        else:
+            self.model_path = Path(model_path)
 
-        for col, le in self.encoders.items():
-            if col in df.columns:
-                try:
-                    df[col] = le.transform(df[col].astype(str))
-                except ValueError as e:
-                    print(f"\n❌ Encoding error in column: {col}")
-                    print(f"   Values in data: {df[col].unique()}")
-                    print(f"   Known classes: {le.classes_}")
-                    raise e
+        # Load model during initialization
+        self.load_model()
 
-        # Scale numerical columns
-        # df_scaled = pd.DataFrame(self.scaler.transform(df), columns=self.features)
-        return df
-        # df_scaled = pd.DataFrame(self.scaler.transform(df), columns=self.features)
-        return df
+        # Initialize SHAP explainer if enabled
+        if self.enable_shap:
+            self._initialize_shap_explainer()
 
-    def predict(self, data_point: Dict):
-        """
-        Make prediction and return:
-        - class label
-        - probability
-        - sorted feature importance ) (descending)
-        """
-        # 1️⃣ Preprocess input
-        df_scaled = self.preprocess_input(data_point)
-
-        # 2️⃣ Prediction
-        prediction = self.model.predict(df_scaled)[0]
-        probability = self.model.predict_proba(df_scaled)[0]
-
-        # 3️⃣ Feature importance (sorted descending)
-        # 3️⃣ Feature importance (sorted descending)
-        feature_importance = dict(
-            zip(df_scaled.columns, self.model.feature_importances_)
-        )
-        feature_importance_sorted = OrderedDict(
-            sorted(feature_importance.items(), key=lambda x: x[1], reverse=True)
-        )
-
-        return prediction, probability, feature_importance_sorted
-
-    def _build_shap_explainer(self, background: pd.DataFrame = None):
-        """
-        Build a SHAP explainer appropriate to the model type.
-
-        Ensures that the background DataFrame is purely numeric,
-        since SHAP explainer backends generally require numeric input.
-        """
-        # Defensive conversion: try to coerce to numeric dtype where possible
-        if background is not None:
+        # Initialize OpenAI client if LLM explanations are enabled
+        if self.enable_llm_explanations and OpenAIClient is not None:
             try:
-                background = background.apply(pd.to_numeric, errors="ignore")
-                non_numeric_cols = background.select_dtypes(
-                    include=["object"]
-                ).columns.tolist()
-                if len(non_numeric_cols) > 0:
-                    print(
-                        f"⚠️ Warning: background data still has non-numeric columns: {non_numeric_cols}"
-                    )
+                self.llm_client = OpenAIClient()
             except Exception as e:
-                print(f"⚠️ Could not fully convert background to numeric: {e}")
+                print(f"Warning: Could not initialize OpenAI client: {e}")
+                self.enable_llm_explanations = False
+                self.llm_client = None
+        else:
+            self.llm_client = None
+
+    def load_model(self) -> None:
+        """
+        Load the trained model from disk.
+
+        Raises:
+            FileNotFoundError: If the model file doesn't exist
+            ValueError: If the model file cannot be loaded
+        """
+        if not self.model_path.exists():
+            raise FileNotFoundError(
+                f"Model not found at: {self.model_path}. "
+                f"Please ensure the model has been trained and saved first."
+            )
 
         try:
-            # Prefer TreeExplainer if model is tree-based
-            explainer = shap.TreeExplainer(self.model, data=background)
-            return explainer
+            self.model = joblib.load(self.model_path)
+            print(f"Model loaded successfully from: {self.model_path}")
         except Exception as e:
-            print(f"TreeExplainer failed: {e}")
-            # Try the more general Explainer (e.g. for linear models)
-            try:
-                explainer = shap.Explainer(self.model, background)
-                return explainer
-            except Exception as inner_e:
-                raise RuntimeError(f"Could not build a SHAP explainer: {inner_e}")
+            raise ValueError(f"Error loading model from {self.model_path}: {str(e)}")
 
-    def compute_shap_for_datapoint(
-        self, data_point: Dict, top_n: int = 5, background_samples: pd.DataFrame = None
-    ) -> Tuple[dict, List[dict]]:
-        df_pre = self.preprocess_input(data_point)
+    def _initialize_shap_explainer(self):
+        """
+        Initialize the SHAP explainer for the loaded model.
 
-        background = background_samples if background_samples is not None else df_pre
-
-        explainer = self._build_shap_explainer(background=background)
+        This should be called after the model is loaded.
+        """
+        if self.model is None:
+            raise ValueError("Model must be loaded before initializing SHAP explainer.")
 
         try:
-            shap_result = explainer(df_pre)
-        except Exception as e:
-            raise RuntimeError("Error computing SHAP values: " + str(e))
+            # Get the model and preprocessing steps from the pipeline
+            if hasattr(self.model, "named_steps"):
+                # Pipeline structure: [('preprocess', ...), ('model', ...)]
+                model_step = self.model.named_steps.get("model")
+                prep_step = self.model.named_steps.get("preprocess")
 
-        values = getattr(shap_result, "values", None)
-        base_values = getattr(shap_result, "base_values", None)
+                if model_step is None or prep_step is None:
+                    print(
+                        "Warning: Could not find 'model' or 'preprocess' steps in pipeline. SHAP may not work correctly."
+                    )
+                    return
 
-        class_index = None
-        try:
-            probs = self.model.predict_proba(df_pre)[0]
-            class_index = int(np.argmax(probs))
-        except Exception:
-            class_index = None
+                # Get feature names from preprocessing step
+                try:
+                    feature_names = prep_step.get_feature_names_out()
+                except AttributeError:
+                    # Fallback: try to get from ColumnTransformer or other methods
+                    try:
+                        feature_names = prep_step.get_feature_names_out()
+                    except:
+                        print(
+                            "Warning: Could not get feature names from preprocessing step."
+                        )
+                        feature_names = None
 
-        if values is None:
-            raise RuntimeError("SHAP returned no values (shap_result.values is None).")
-
-        arr = None
-        try:
-            if isinstance(values, list) or (
-                hasattr(values, "ndim") and getattr(values, "ndim", None) == 3
-            ):
-                if (
-                    class_index is not None
-                    and isinstance(values, (list, np.ndarray))
-                    and class_index < len(values)
-                ):
-                    arr = np.array(values[class_index]).reshape(-1)
+                # Create SHAP explainer
+                if feature_names is not None:
+                    self.explainer = shap.Explainer(
+                        model_step, feature_names=feature_names
+                    )
                 else:
-                    arr = np.array(values[0]).reshape(-1)
+                    self.explainer = shap.Explainer(model_step)
+
+                print("SHAP explainer initialized successfully.")
             else:
-                # typical shape: (1, n_features)
-                arr = np.array(values).reshape(-1)
-        except Exception:
-            # Last-resort flatten
-            arr = np.array(values).reshape(-1)
+                # If model is not a pipeline, create explainer directly
+                self.explainer = shap.Explainer(self.model)
+                print("SHAP explainer initialized successfully (non-pipeline model).")
+        except Exception as e:
+            print(f"Warning: Could not initialize SHAP explainer: {e}")
+            self.explainer = None
 
-        base = None
-        if base_values is not None:
-            try:
-                if isinstance(base_values, (list, np.ndarray)):
-                    base_arr = np.array(base_values).reshape(-1)
-                    if class_index is not None and class_index < base_arr.size:
-                        base = float(base_arr[class_index])
-                    else:
-                        base = float(base_arr[0])
-                else:
-                    base = float(base_values)
-            except Exception:
-                base = None
+    def predict(self, data: Union[pd.DataFrame, Dict, List[Dict]]) -> np.ndarray:
+        """
+        Make delay_days predictions on input data.
 
-        feature_names = list(df_pre.columns)
-        # Defensive trim/pad if mismatched lengths
-        min_len = min(len(feature_names), arr.size)
-        feature_names = feature_names[:min_len]
-        arr = arr[:min_len]
+        Args:
+            data: Input data in one of the following formats:
+                  - pandas DataFrame
+                  - Dictionary (single sample)
+                  - List of dictionaries (multiple samples)
 
-        shap_map = {}
-        for fname, sval in zip(feature_names, arr):
-            raw_val = data_point.get(fname, None)
-            shap_map[fname] = {
-                "shap_value": float(sval),
-                "abs": float(abs(sval)),
-                "raw_value": raw_val,
+        Returns:
+            numpy.ndarray: Predicted delay_days (inverse transformed if log was used)
+        """
+        if self.model is None:
+            raise ValueError("Model not loaded. Call load_model() first.")
+
+        # Convert input to DataFrame
+        if isinstance(data, dict):
+            df = pd.DataFrame([data])
+        elif isinstance(data, list):
+            df = pd.DataFrame(data)
+        elif isinstance(data, pd.DataFrame):
+            df = data.copy()
+        else:
+            raise ValueError(
+                "Data must be a pandas DataFrame, dictionary, or list of dictionaries."
+            )
+
+        # Make predictions using the pipeline (handles preprocessing automatically)
+        predictions_log = self.model.predict(df)
+
+        # Apply inverse transform if log1p was used during training
+        if USE_LOG_TARGET:
+            predictions = np.expm1(predictions_log)
+        else:
+            predictions = predictions_log
+
+        return predictions
+
+    def predict_delay_days(
+        self, data: Union[pd.DataFrame, Dict, List[Dict]]
+    ) -> Union[float, np.ndarray]:
+        """
+        Predict delay_days for input data.
+
+        Args:
+            data: Input data in one of the following formats:
+                  - pandas DataFrame
+                  - Dictionary (single sample)
+                  - List of dictionaries (multiple samples)
+
+        Returns:
+            float or numpy.ndarray: Predicted delay_days
+                                   - float for single sample
+                                   - numpy.ndarray for multiple samples
+        """
+        predictions = self.predict(data)
+
+        # Return scalar for single prediction, array for multiple
+        if len(predictions) == 1:
+            return float(predictions[0])
+        return predictions
+
+    def predict_classification(
+        self,
+        data: Union[pd.DataFrame, Dict, List[Dict]],
+        threshold: Optional[float] = None,
+    ) -> Union[int, np.ndarray]:
+        """
+        Predict classification (delayed or not) based on threshold.
+
+        Args:
+            data: Input data in one of the following formats:
+                  - pandas DataFrame
+                  - Dictionary (single sample)
+                  - List of dictionaries (multiple samples)
+            threshold: Delay threshold in days (default: DELAY_THRESHOLD)
+                      Predictions > threshold are classified as delayed (1)
+
+        Returns:
+            int or numpy.ndarray: Binary classification
+                                 - 0: Not delayed (delay_days <= threshold)
+                                 - 1: Delayed (delay_days > threshold)
+                                 - Returns int for single sample, array for multiple
+        """
+        if threshold is None:
+            threshold = DELAY_THRESHOLD
+
+        predictions = self.predict(data)
+        classifications = (predictions > threshold).astype(int)
+
+        # Return scalar for single prediction, array for multiple
+        if len(classifications) == 1:
+            return int(classifications[0])
+        return classifications
+
+    def predict_with_details(
+        self,
+        data: Union[pd.DataFrame, Dict, List[Dict]],
+        threshold: Optional[float] = None,
+    ) -> pd.DataFrame:
+        """
+        Make predictions and return detailed results including both regression and classification.
+
+        Args:
+            data: Input data in one of the following formats:
+                  - pandas DataFrame
+                  - Dictionary (single sample)
+                  - List of dictionaries (multiple samples)
+            threshold: Delay threshold in days for classification (default: DELAY_THRESHOLD)
+
+        Returns:
+            pandas.DataFrame: Results with columns:
+                - predicted_delay_days: Predicted delay in days
+                - is_delayed: Binary classification (0/1)
+                - delay_category: "Not Delayed" or "Delayed"
+        """
+        if threshold is None:
+            threshold = DELAY_THRESHOLD
+
+        # Convert input to DataFrame
+        if isinstance(data, dict):
+            df = pd.DataFrame([data])
+        elif isinstance(data, list):
+            df = pd.DataFrame(data)
+        elif isinstance(data, pd.DataFrame):
+            df = data.copy()
+        else:
+            raise ValueError(
+                "Data must be a pandas DataFrame, dictionary, or list of dictionaries."
+            )
+
+        # Get predictions
+        delay_predictions = self.predict(df)
+        classifications = self.predict_classification(df, threshold=threshold)
+
+        # Create results DataFrame
+        results = pd.DataFrame(
+            {
+                "predicted_delay_days": delay_predictions,
+                "is_delayed": classifications,
+                "delay_category": pd.Series(classifications)
+                .map({0: "Not Delayed", 1: "Delayed"})
+                .values,
             }
-
-        sorted_feats = sorted(shap_map.items(), key=lambda x: x[1]["abs"], reverse=True)
-        ordered_shap = OrderedDict((k, v) for k, v in sorted_feats)
-
-        top_features = []
-        for fname, meta in sorted_feats[:top_n]:
-            top_features.append({"feature": fname, **meta})
-
-        shap_summary_dict = {"base_value": base, "features": ordered_shap}
-        print(shap_summary_dict)
-        return shap_summary_dict, top_features
-
-    async def explain_delay_with_shap_and_llm(
-        self, data_point: Dict, top_n: int = 5, background_samples: pd.DataFrame = None
-    ) -> Dict:
-        """
-        Full flow for a single datapoint:
-          - Preprocess and predict
-          - Compute SHAP explanation
-          - Format concise SHAP summary and call the LLM to produce a one-line causal reason if prediction indicates delay
-
-        Returns:
-            A dictionary containing:
-              - prediction: model predicted class
-              - probability: predicted probabilities (list)
-              - shap_summary: as returned by compute_shap_for_datapoint
-              - top_features: list of top feature dicts
-              - llm_message: one-line explanation from the LLM if prediction suggests 'delayed', otherwise None
-        """
-        df_pre = self.preprocess_input(data_point)
-        prediction = self.model.predict(df_pre)[0]
-        probability = self.model.predict_proba(df_pre)[0]
-
-        shap_summary, top_features = self.compute_shap_for_datapoint(
-            data_point=data_point, top_n=top_n, background_samples=background_samples
         )
-
-        def feature_line(feat_dict):
-            sign = "+" if feat_dict["shap_value"] >= 0 else "-"
-            return f"{feat_dict['feature']}: {sign}{abs(feat_dict['shap_value']):.4f} (value={feat_dict['raw_value']})"
-
-        shap_text_lines = [feature_line(f) for f in top_features]
-        shap_text = "\n".join(shap_text_lines)
-        base_val = shap_summary.get("base_value", None)
-        base_line = (
-            f"base_value: {base_val:.4f}"
-            if base_val is not None
-            else "base_value: unknown"
-        )
-
-        system_prompt = """
-        You are an assistant that explains why shipments are delayed using model explanation (SHAP).
-        Produce a single-line plain-language reason for why this shipment may be delayed.
-        Use the SHAP contributions to cite which features likely pushed the prediction toward delay.
-        Keep language simple and concise.
-        """
-
-        user_prompt = f"""
-        Original datapoint:
-        {json.dumps(data_point, default=str)}
-
-        Model prediction: {prediction}
-        Class probabilities: {np.array2string(probability, precision=4, separator=', ')}
-
-        SHAP summary (top {top_n} features)
-        {base_line}
-        {shap_text}
-
-        Produce a ONE-LINE reason (not bullets) for why the shipment may be delayed,
-        referencing the most important contributing features and a short causal phrase.
-        """
-
-        llm_message = None
-        if str(prediction).lower() in ("delayed", "delay", "1", "true", "yes"):
-            llm_message = await self.llm.generate_response(system_prompt, user_prompt)
-
-        return {
-            "prediction": prediction,
-            "probability": (
-                probability.tolist() if hasattr(probability, "tolist") else probability
-            ),
-            "shap_summary": shap_summary,
-            "top_features": top_features,
-            "llm_message": llm_message,
-        }
-
-    async def get_data_for_inference_from_cube(self):
-        """
-        Fetch dataset for inference from DatasetPreparation, run inference row-by-row,
-        compute SHAP + LLM explanation for 'delayed' cases, and collect results.
-
-        Returns:
-            List[dict] where each dict contains batch_in_id, title, prediction, message (LLM result), and metadata.
-        Fetch dataset for inference from DatasetPreparation, run inference row-by-row,
-        compute SHAP + LLM explanation for 'delayed' cases, and collect results.
-
-        Returns:
-            List[dict] where each dict contains batch_in_id, title, prediction, message (LLM result), and metadata.
-        """
-        # 1) Load data using your repository helper (should return a DataFrame)
-        get_data = DatasetPreparation(
-            customer_name=self.customer_name,
-            start_timestamp=self.start_timestamp,
-            end_timestamp=self.end_timestamp,
-            po_comitted=self.po_comitted,
-        ).calculate_target_variable_from_clean_dataset(task="inference")
-
-        # Short system prompt for the LLM is embedded in explain_delay_with_shap_and_llm
-        # Short system prompt for the LLM is embedded in explain_delay_with_shap_and_llm
-        results = []
-
-        # Iterate rows and perform inference + explanation
-        # Iterate rows and perform inference + explanation
-        for _, row in get_data.iterrows():
-            # Convert row to dict and remove target label if present
-            # Convert row to dict and remove target label if present
-            data_point = row.to_dict()
-            data_point.pop("shipment_classified", None)
-            data_point.pop("shipment_classified", None)
-            batch_id = data_point.get("batch_in_id")
-            batch_number = data_point.get("batch_number", "Unknown")
-
-            # Optional quick sanity check: ensure columns align with model features
-            if sorted(list(data_point.keys())) != sorted(list(self.features)):
-                # Warn but continue; preprocess_input expects self.features.
-                # If mismatch is expected, adapt this check or ensure DatasetPreparation yields correct columns.
-                print(
-                    "Warning: data point keys differ from model features; proceeding anyway."
-                )
-
-            # 1) Basic prediction & feature importance
-            prediction, probability, feature_importance = self.predict(data_point)
-            print(f"Computed prediction for batch {batch_number}: {prediction}")
-            print("Top model feature importances (if available):", feature_importance)
-
-            # 2) If delayed, compute SHAP + call LLM for a one-line causal reason
-            if str(prediction).lower() in ("delayed", "delay", "1", "true", "yes"):
-                explanation = await self.explain_delay_with_shap_and_llm(
-                    data_point, top_n=5
-                )
-
-                results.append(
-                    {
-                        "batch_in_id": batch_id,
-                        "title": "Shipment may be delayed for batch number: "
-                        + batch_number,
-                        "prediction": explanation["prediction"],
-                        "message": explanation["llm_message"],
-                        "customer_name": self.customer_name,
-                        "vendor_id": data_point.get("vendor_id"),
-                        "customer_po": data_point.get("purchase_order"),
-                        "sku": data_point.get("sku"),
-                        "po_comitted": self.po_comitted,
-                        # Optionally include raw SHAP summary for dashboards or auditing
-                        # "shap": explanation["shap_summary"],
-                        "probability": explanation["probability"],
-                    }
-                )
 
         return results
 
-    # async def get_data_for_inference_from_cube(self):
-    #     """
-    #     Fetch data, run inference row-by-row,
-    #     and return a list of dictionaries containing
-    #     batch_in_id and prediction.
-    #     """
-    #     # 1️⃣ Load data
-    #     get_data = DatasetPreparation(
-    #         customer_name=self.customer_name,
-    #         start_timestamp=self.start_timestamp,
-    #         end_timestamp=self.end_timestamp,
-    #         po_comitted=self.po_comitted,
-    #     ).calculate_target_variable_from_clean_dataset(task="inference")
+    def _transform_data_for_shap(self, data: pd.DataFrame) -> pd.DataFrame:
+        """
+        Transform input data using the preprocessing step for SHAP computation.
 
-    #     system_prompt = """
-    #     You are a helpful assistant that will help analyze the shipment issues and get the reason behind the shipment delay in a single line.
-    #     Write the reason why the shipment may have been potentially delayed in a single line considering the feature importance that is provided.
-    #     Instead of just relaying on the feature importance value alone, try to come up with why those features may have contributed to the delay.
-    #     Use Simple language and avoid using too many words.
-    #     Here are detail of the features columns that are used for training the model:
-    #     - quantity_in: The quantity of the shipment
-    #     - seal: The seal of the shipment
-    #     - yield_percentage: The yield percentage of the shrimps
-    #     - gap_between_due_and_eta: The gap between the due date the bill must be paid and the eta (estimated time of arrival of shipment)
-    #     - gap_between_shipped_and_due: The gap between the shipped date(date when shipment is marked as shipped) and the due date(the date when the bill must be paid)
-    #     - gap_between_bill_and_shipment: The gap between the bill date(the date when the bill was issued) and the shipped date(the date when shipment is marked as shipped)
-    #     - gap_between_eta_shipped: The gap between the eta date(estimated time of arrival of shipment) and the shipped date(the date when shipment is marked as shipped)
-    #     - gap_between_eta_bill: The gap between the eta date(estimated time of arrival of shipment) and the bill date(the date when the bill was issued)
-    #     - due_gap: The gap between the due date(the date when the bill must be paid) and the bill date(the date when the bill was issued)
-    #     - responsiveness: The responsiveness of the shipment (the gap between the bill date and the shipped date)
+        Args:
+            data: Input DataFrame with raw features
 
-    #     Flow of the shipment:
-    #     first bill is issued along with due date, then shipment is marked as shipped, then eta is estimated, then shipment is received.
+        Returns:
+            Transformed DataFrame ready for SHAP explainer
+        """
+        if not hasattr(self.model, "named_steps"):
+            return data
 
-    #     Example:
-    #     Delayed may be due to the following reasons:
-    #     - The gap between the due date and the eta is too long
-    #     - The gap between the shipped date and the due date is too long
-    #     - The gap between the bill date and the shipped date is too long
-    #     """
-    #     user_prompt = """
-    #     Here is the data:
-    #     {data_point}
-    #     Here is the prediction:
-    #     {prediction}
-    #     Here is the probability for each class:
-    #     {probability}
-    #     Here is the feature importance:
-    #     {feature_importance}
-    #     """
+        prep_step = self.model.named_steps.get("preprocess")
+        if prep_step is None:
+            return data
 
-    #     results = []
+        # Transform the data using the preprocessing step
+        transformed_data = prep_step.transform(data)
 
-    #     for _, row in get_data.iterrows():
-    #         data_point = row.to_dict()
-    #         data_point.pop("shipment_classified", None)
-    #         batch_id = data_point.get("batch_in_id")
-    #         batch_number = data_point.get("batch_number", "Unknown")
-    #         print(sorted(list(data_point.keys())) == sorted(list(self.features)))
+        # Convert to DataFrame with feature names if available
+        try:
+            feature_names = prep_step.get_feature_names_out()
+            return pd.DataFrame(
+                transformed_data, columns=feature_names, index=data.index
+            )
+        except:
+            # If we can't get feature names, return as array (SHAP can handle this)
+            return transformed_data
 
-    #         # if batch_id is None:
-    #         #     continue  # skip if batch_in_id missing
+    def get_shap_values(
+        self,
+        data: Union[pd.DataFrame, Dict, List[Dict]],
+        background_data: Optional[pd.DataFrame] = None,
+    ) -> Optional[shap.Explanation]:
+        """
+        Compute SHAP values for the given data.
 
-    #         prediction, probability, feature_importance = self.predict(data_point)
-    #         print(feature_importance)
-    #         print(f"The prediction is: {prediction}")
-    #         if prediction == "delayed":
-    #             status_message = await self.llm.generate_response(
-    #                 system_prompt,
-    #                 user_prompt.format(
-    #                     data_point=data_point,
-    #                     prediction=prediction,
-    #                     probability=probability,
-    #                     feature_importance=feature_importance,
-    #                 ),
-    #             )
+        Args:
+            data: Input data in one of the following formats:
+                  - pandas DataFrame
+                  - Dictionary (single sample)
+                  - List of dictionaries (multiple samples)
+            background_data: Optional background dataset for SHAP (if not provided, uses the input data)
 
-    #             results.append(
-    #                 {
-    #                     "batch_in_id": batch_id,
-    #                     "title": "Shipment may be delayed for batch number: "
-    #                     + batch_number,
-    #                     "prediction": prediction,
-    #                     "message": status_message,
-    #                     "customer_name": self.customer_name,
-    #                     "vendor_id": data_point.get("vendor_id"),
-    #                     "customer_po": data_point.get("purchase_order"),
-    #                     "sku": data_point.get("sku"),
-    #                     "po_comitted": self.po_comitted,
-    #                 }
-    #             )
+        Returns:
+            SHAP Explanation object or None if SHAP is disabled or explainer not available
+        """
+        if not self.enable_shap or self.explainer is None:
+            return None
 
-    #     return results
+        # Convert input to DataFrame
+        if isinstance(data, dict):
+            df = pd.DataFrame([data])
+        elif isinstance(data, list):
+            df = pd.DataFrame(data)
+        elif isinstance(data, pd.DataFrame):
+            df = data.copy()
+        else:
+            raise ValueError(
+                "Data must be a pandas DataFrame, dictionary, or list of dictionaries."
+            )
+
+        # Transform data for SHAP
+        transformed_data = self._transform_data_for_shap(df)
+
+        # Compute SHAP values
+        try:
+            shap_values = self.explainer(transformed_data)
+            return shap_values
+        except Exception as e:
+            print(f"Error computing SHAP values: {e}")
+            return None
+
+    def _get_llm_system_prompt(self) -> str:
+        """Get the system prompt for LLM-based explanations."""
+        return """You are an expert data scientist specializing in machine learning model output explanations and the reasoning behind them. 
+        Your task is to help explain the predictions of a Gradient Boosting regression model trained to predict shipment delay days.
+        When given feature values for a shipment and SHAP values, provide a clear, concise explanation of how features contribute to the predicted delay days.
+        Focus on the most impactful features and their influence on the prediction.
+        Try to keep the explanation based on the data provided.
+        Try to find the root cause behind the delay.
+        Avoid using technical jargon; explain in simple terms.
+        Try to explain the predictions in bullet points that are **short and concise such that it is quick for customers to grasp**.
+        Do not use the feature names directly in the explanation.
+        Try to back up the reasonings with the numerical value wherever possible.
+
+        Here is the idea behind the features provided:
+        - shipping_duration_days: Expected duration of the shipment in days.
+        - lead_time_days: Number of days between order placement and shipment.
+        - is_early_delivery: Indicator if the delivery was early (1) or not (0).
+        - coo: Country of origin of the shipment.
+        - scac: Standard Carrier Alpha Code representing the shipping carrier.
+        - tariff_amount: The tariff cost associated with the shipment.
+        - ocean_freight: Cost of ocean freight for the shipment.
+        - delivery_terms: Terms of delivery (e.g., CY, DDP).
+        - po_shipment_terms: Purchase order shipment terms.
+        - tariff_type: Type of tariff applied to the shipment.
+        - total_bcy: Total cost in base currency.
+        - quantity_in: Quantity of items in the shipment.
+        - item_sku: Stock Keeping Unit identifier for the item.
+        - item_brand: Brand of the item being shipped.
+        - item_manufacturer: Manufacturer of the item.
+        - item_product_category: Category of the product being shipped.
+        - item_size: Size specification of the item.
+        - vendor_name: Name of the vendor supplying the item.
+        - vendor_avg_delay_days: Average delay days for shipments from this vendor.
+        - vendor_shipments: Total number of shipments made by this vendor.
+        - vendor_on_time_rate: Percentage of on-time deliveries by this vendor.
+        - vendor_p50_delay_days: 50th percentile delay days for this vendor.
+        - vendor_p90_delay_days: 90th percentile delay days for this vendor.
+        - shipped_date_weekday: Day of the week the shipment was sent (0=Monday, 6=Sunday).
+        - shipped_date_month: Month the shipment was sent (1-12).
+        - shipped_date_day: Day of the month the shipment was sent (1-31).
+
+        Things to avoid:
+        "The day of the week when the shipment was sent may contribute slightly to delays." Instead write "Shipments sent on (name of the day) may experience minor delays due to operational factors based on historical data".
+
+        Expected Outputs Format:
+        The output should have the following bullets or points in the output like 
+        - Predicted delay
+        - Shipping time
+        - Vendor on-time rate
+        - Vendor Average Past Delay Days
+        - Shipped day
+
+        if there is no data available then write "N/A" in the output.
+        
+        Example 1:
+        Predicted delay: ~30 days
+        Shipping time: 139 days (high uncertainty)
+        Vendor on-time rate: 5% (frequent delays)
+        Lead time: 233 days (error-prone)
+        Ship day: Friday (weekend hold risk)
+
+        Example 2:
+        Predicted delay: ~5 days
+        Ship day: Monday → operational backlog
+        Vendor on-time rate: 33% (high risk)
+        Shipping time: 73 days → unexpected issues
+        High tariffs/freight: Customs & logistics delays
+        """
+
+    async def generate_llm_explanation(
+        self,
+        data: Union[pd.DataFrame, Dict, List[Dict]],
+        predicted_delay: float,
+        shap_values: Optional[shap.Explanation] = None,
+    ) -> Optional[List[str]]:
+        """
+        Generate LLM-based explanation for a prediction using SHAP values.
+
+        Args:
+            data: Input data used for prediction
+            predicted_delay: The predicted delay in days
+            shap_values: Optional SHAP values (will be computed if not provided)
+
+        Returns:
+            List of explanation strings or None if LLM is disabled
+        """
+        if not self.enable_llm_explanations or self.llm_client is None:
+            return None
+
+        # Convert input to DataFrame
+        if isinstance(data, dict):
+            df = pd.DataFrame([data])
+        elif isinstance(data, list):
+            df = pd.DataFrame(data)
+        elif isinstance(data, pd.DataFrame):
+            df = data.copy()
+        else:
+            raise ValueError(
+                "Data must be a pandas DataFrame, dictionary, or list of dictionaries."
+            )
+
+        # Get SHAP values if not provided
+        if shap_values is None and self.enable_shap:
+            shap_values = self.get_shap_values(df)
+
+        # Build user prompt
+        user_prompt = f"""Given the following feature values for a shipment:
+            {df.to_dict(orient='records')[0]}
+
+            The model predicted a delay of {predicted_delay:.2f} days.
+            Please explain how the key features influenced this prediction."""
+
+        if shap_values is not None:
+            # Add SHAP values to the prompt
+            try:
+                # Get SHAP values for the first sample
+                if hasattr(shap_values, "values") and len(shap_values.values) > 0:
+                    shap_vals = shap_values.values[0]
+                    # Get feature names if available
+                    if hasattr(shap_values, "feature_names"):
+                        feature_names = shap_values.feature_names
+                    else:
+                        feature_names = [f"feature_{i}" for i in range(len(shap_vals))]
+
+                    # Create a dictionary of feature names to SHAP values
+                    shap_dict = dict(zip(feature_names, shap_vals))
+                    user_prompt += f"\n\nSHAP values for the features are:\n{json.dumps(shap_dict, indent=2)}"
+            except Exception as e:
+                print(f"Warning: Could not include SHAP values in prompt: {e}")
+
+        try:
+            # Generate explanation using structured output
+            system_prompt = self._get_llm_system_prompt()
+            explanation = await self.llm_client.generate_formatted_response(
+                system_prompt=system_prompt,
+                user_prompt=user_prompt,
+                response_format=ShipmentExplanation,
+                temperature=0.7,
+            )
+
+            if explanation and hasattr(explanation, "reasonings"):
+                return explanation.reasonings
+            return None
+        except Exception as e:
+            print(f"Error generating LLM explanation: {e}")
+            return None
+
+    async def predict_with_explanations(
+        self,
+        data: Union[pd.DataFrame, Dict, List[Dict]],
+        include_shap: bool = True,
+        include_llm: bool = True,
+        threshold: Optional[float] = None,
+    ) -> Dict:
+        """
+        Make predictions with SHAP values and LLM-based explanations.
+
+        Args:
+            data: Input data in one of the following formats:
+                  - pandas DataFrame
+                  - Dictionary (single sample)
+                  - List of dictionaries (multiple samples)
+            include_shap: Whether to include SHAP values (default: True)
+            include_llm: Whether to include LLM explanations (default: True)
+            threshold: Delay threshold in days for classification (default: DELAY_THRESHOLD)
+
+        Returns:
+            Dictionary containing:
+                - predictions: Predicted delay days
+                - classifications: Binary classification (if threshold provided)
+                - shap_values: SHAP Explanation object (if include_shap=True)
+                - llm_explanation: List of explanation strings (if include_llm=True)
+        """
+        if threshold is None:
+            threshold = DELAY_THRESHOLD
+
+        # Convert input to DataFrame
+        if isinstance(data, dict):
+            df = pd.DataFrame([data])
+        elif isinstance(data, list):
+            df = pd.DataFrame(data)
+        elif isinstance(data, pd.DataFrame):
+            df = data.copy()
+        else:
+            raise ValueError(
+                "Data must be a pandas DataFrame, dictionary, or list of dictionaries."
+            )
+
+        # Get predictions
+        predictions = self.predict(df)
+
+        # Initialize result dictionary
+        result = {
+            "predictions": predictions,
+            "classifications": (
+                (predictions > threshold).astype(int) if threshold else None
+            ),
+        }
+
+        # Get SHAP values if requested
+        if include_shap and self.enable_shap:
+            shap_values = self.get_shap_values(df)
+            result["shap_values"] = shap_values
+        else:
+            shap_values = None
+            result["shap_values"] = None
+
+        # Get LLM explanations if requested (only if there is a delay)
+        if include_llm and self.enable_llm_explanations:
+            classifications_arr = result["classifications"]
+
+            # Helper function to check if a prediction indicates a delay
+            def is_delayed_prediction(idx: int) -> bool:
+                """Check if prediction at index idx indicates a delay."""
+                if classifications_arr is not None:
+                    if isinstance(classifications_arr, np.ndarray):
+                        return bool(classifications_arr[idx])
+                    else:
+                        # Single prediction case - classifications_arr is a scalar
+                        return bool(classifications_arr) if idx == 0 else False
+                else:
+                    # If no classifications, check if prediction > threshold
+                    delay_threshold = threshold if threshold is not None else 0.0
+                    return predictions[idx] > delay_threshold
+
+            # For single prediction, generate explanation only if delayed
+            if len(predictions) == 1:
+                if is_delayed_prediction(0):
+                    llm_explanation = await self.generate_llm_explanation(
+                        df, float(predictions[0]), shap_values
+                    )
+                    result["llm_explanation"] = llm_explanation
+                else:
+                    result["llm_explanation"] = None
+            else:
+                # For multiple predictions, generate explanations only for delayed ones
+                explanations = []
+                for idx in range(len(predictions)):
+                    if is_delayed_prediction(idx):
+                        single_df = df.iloc[[idx]]
+                        single_shap = None
+                        if shap_values is not None and hasattr(shap_values, "values"):
+                            # Extract SHAP values for this sample
+                            single_shap = shap.Explanation(
+                                values=shap_values.values[idx : idx + 1],
+                                base_values=(
+                                    shap_values.base_values[idx : idx + 1]
+                                    if hasattr(shap_values, "base_values")
+                                    else None
+                                ),
+                                data=(
+                                    shap_values.data[idx : idx + 1]
+                                    if hasattr(shap_values, "data")
+                                    else None
+                                ),
+                                feature_names=(
+                                    shap_values.feature_names
+                                    if hasattr(shap_values, "feature_names")
+                                    else None
+                                ),
+                            )
+                        explanation = await self.generate_llm_explanation(
+                            single_df, float(predictions[idx]), single_shap
+                        )
+
+                        explanations.append(explanation)
+                    else:
+                        explanations.append(None)
+                result["llm_explanation"] = explanations
+        else:
+            result["llm_explanation"] = None
+
+        return result
+
+    async def run_batch_and_format_json(
+        self,
+        dataset: Optional[pd.DataFrame] = None,
+        *,
+        threshold: float = DELAY_THRESHOLD,
+        include_shap: bool = True,
+        include_llm: bool = True,
+    ) -> List[Dict]:
+        """
+        Run inference on a dataset and return ONLY delayed shipments in the required JSON format.
+
+        Output schema (per delayed row):
+        {
+          "batch_in_id": str,
+          "title": str,                         # always "may be delayed..."
+          "prediction": "delayed",
+          "message": str,                       # LLM reason or numeric fallback
+          "customer_name": str,
+          "vendor_id": str | None,
+          "customer_po": str | None,
+          "sku": int | str | None,
+          "po_comitted": str | None,
+          "probability": [p_delayed, p_on_time] # UX-ish soft score, not calibrated
+        }
+        """
+
+        # 0) Load dataset if not provided
+        if dataset is None:
+            try:
+                from src.azgems.repositories.DatasetPreparation import (
+                    DatasetPreparation,
+                )
+
+                dataset_preparation = DatasetPreparation(
+                    start_timestamp=getattr(self, "start_timestamp", None),
+                    end_timestamp=getattr(self, "end_timestamp", None),
+                )
+                dataset = dataset_preparation.clean_dataset(method="inference")
+                print(dataset.info())
+            except Exception:
+                dataset = None
+
+        if dataset is None or len(dataset) == 0:
+            return []
+
+        df = dataset.copy()
+
+        # 1) Predictions + classification + (optional) SHAP + (conditional) LLM
+        result = await self.predict_with_explanations(
+            data=df,
+            include_shap=include_shap and self.enable_shap,
+            include_llm=include_llm and self.enable_llm_explanations,
+            threshold=threshold,
+        )
+
+        preds = result.get("predictions")
+        classes = result.get("classifications")
+        llm_expls = result.get("llm_explanation")
+
+        n = len(df)
+        if preds is None or len(preds) != n:
+            raise RuntimeError(
+                "Predictions length mismatch in run_batch_and_format_json()."
+            )
+
+        # Broadcast/compute classifications if needed
+        if classes is None:
+            classes = (preds > threshold).astype(int)
+        elif np.isscalar(classes):
+            classes = np.repeat(int(classes), n)
+        elif len(classes) != n:
+            raise RuntimeError(
+                "Classifications length mismatch in run_batch_and_format_json()."
+            )
+
+        # Normalize explanations list
+        if not isinstance(llm_expls, list) or len(llm_expls) != n:
+            llm_expls = [None] * n
+
+        # Helper: safe column getter with aliases
+        def pick(row: pd.Series, aliases: List[str], default=None):
+            for k in aliases:
+                if k in row and pd.notna(row[k]):
+                    return row[k]
+            return default
+
+        # Helper: join LLM bullet points
+        def join_explanations(x) -> str:
+            if x is None:
+                return "N/A"
+            try:
+                parts = [s.strip() for s in x if isinstance(s, str) and s.strip()]
+                return " ".join(parts) if parts else "N/A"
+            except Exception:
+                return "N/A"
+
+        # Soft probability from (pred - threshold)
+        def soft_probability(
+            pred: float, thr: float, scale: float = 2.0
+        ) -> List[float]:
+            z = (pred - thr) / max(1e-6, scale)
+            p_delayed = float(1.0 / (1.0 + np.exp(-z)))
+            p_ontime = 1.0 - p_delayed
+            return [round(p_delayed, 4), round(p_ontime, 4)]
+
+        # 2) Keep only delayed rows
+        delayed_idx = np.where(np.asarray(classes) == 1)[0]
+        if delayed_idx.size == 0:
+            return []
+
+        payload: List[Dict] = []
+        for i in delayed_idx:
+            row = df.iloc[i]
+
+            batch_in_id = str(
+                pick(
+                    row,
+                    [
+                        "batch_in_id",
+                        "batch_id",
+                        "bill_id",
+                        "shipment_id",
+                        "container_no",
+                        "container_id",
+                    ],
+                    default=str(i),
+                )
+            )
+            vendor_id = pick(
+                row, ["vendor_id", "vendorid", "vendor_code"], default=None
+            )
+            customer_po = pick(
+                row, ["customer_po", "po", "po_number", "po_no"], default=None
+            )
+            sku = pick(row, ["item_sku", "sku"], default=None)
+            po_committed = pick(
+                row, ["po_comitted", "po_committed", "po_shipment_terms"], default=None
+            )
+
+            pred_days = float(preds[i])
+
+            # Prefer LLM explanation; fallback to numeric context
+            msg = join_explanations(llm_expls[i])
+            if msg == "N/A":
+                msg = f"Predicted delay ≈ {pred_days:.2f} days (threshold {threshold})."
+
+            payload.append(
+                {
+                    "batch_in_id": batch_in_id,
+                    "title": f"Shipment may be delayed for batch number: {batch_in_id}",
+                    "prediction": "delayed",
+                    "message": msg,
+                    "customer_name": self.customer_name or "",
+                    "vendor_id": str(vendor_id) if vendor_id is not None else None,
+                    "customer_po": (
+                        str(customer_po) if customer_po is not None else None
+                    ),
+                    "sku": sku if sku is not None else None,
+                    "po_comitted": (
+                        str(po_committed) if po_committed is not None else None
+                    ),
+                    "probability": soft_probability(pred_days, threshold),
+                }
+            )
+
+        return payload
 
 
 if __name__ == "__main__":
-    # Example usage
-    model_loader = ModelInference(
+    inf = Inference(
         customer_name="Walmart",
-        start_timestamp="2025-10-13",
-        end_timestamp="2025-10-15",
-        po_comitted="Direct Sale",
+        model_path="models/azgems/Walmart/ShipmentClassificationModel.joblib",
+        start_timestamp="2025-08-01",
+        end_timestamp="2025-08-30",
     )
-
-    # Dummy data point (use actual feature names from your dataset)
-    dummy_data = {
-        "quantity_in": 100,
-        "bill_date_year": "2025",
-        "bill_date_month": "10",
-        "bill_date_day": "13",
-        "bill_date_weekday": "0",
-        "due_date_year": "2025",
-        "due_date_month": "10",
-        "due_date_day": "15",
-        "due_date_weekday": "2",
-        "eta_year": "2025",
-        "eta_month": "10",
-        "eta_day": "14",
-        "eta_weekday": "1",
-        "yield_percentage": 85.0,
-        "seal": "M0676831",
-        "customs_broker": "unknown",
-        "ocean_freight": 500.0,
-        # Add any other features present in self.features
-    }
-
-    pred_class, pred_prob = model_loader.predict(dummy_data)
-    print("Predicted class:", pred_class)
-    print("Class probabilities:", pred_prob)
+    results_json = inf.run_batch_and_format_json()
+    print(json.dumps(results_json[:3], indent=2))
