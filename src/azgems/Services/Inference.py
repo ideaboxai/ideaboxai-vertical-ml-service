@@ -16,12 +16,47 @@ DELAY_THRESHOLD = 5  # for derived classification
 USE_LOG_TARGET = True  # log1p transform was used during training
 
 
-class ShipmentExplanation(BaseModel):
-    """Pydantic model for structured LLM explanations."""
+from typing import Dict, List, Optional, Literal
+from pydantic import BaseModel, Field
 
-    reasonings: List[str] = Field(
+ReasonKey = Literal[
+    "predicted_delay",
+    "shipping_time",
+    "vendor_on_time_rate",
+    "vendor_avg_past_delay",
+    "ship_weekday",
+]
+
+
+class MessageItem(BaseModel):
+    key: ReasonKey = Field(
         ...,
-        description="List of reasonings for the predicted shipment delay. First item should contain how many days of delay was predicted.",
+        description=(
+            "Constant key identifying the message type. "
+            "One of: 'predicted_delay', 'shipping_time', "
+            "'vendor_on_time_rate', 'vendor_avg_past_delay', 'ship_weekday'."
+        ),
+    )
+    text: str = Field(
+        ...,
+        description="Human-readable message to display in the UI (single line or short sentence).",
+    )
+
+
+class ShipmentExplanation(BaseModel):
+    # reasonings: List[str] = Field(
+    #     ...,
+    #     description=(
+    #         "Legacy/free-form lines explaining the prediction. "
+    #         "The first item should include the predicted delay in days."
+    #     ),
+    # )
+    messages: List[MessageItem] = Field(
+        default_factory=list,
+        description=(
+            "Structured messages for the UI. Each item has a constant 'key' and a 'text' value, "
+            "so the frontend can render by known keys without parsing free text."
+        ),
     )
 
 
@@ -526,8 +561,8 @@ class Inference:
                 temperature=0.7,
             )
 
-            if explanation and hasattr(explanation, "reasonings"):
-                return explanation.reasonings
+            if explanation and hasattr(explanation, "messages"):
+                return [message.text + ',' for message in explanation.messages]
             return None
         except Exception as e:
             print(f"Error generating LLM explanation: {e}")
@@ -835,5 +870,5 @@ if __name__ == "__main__":
         start_timestamp="2025-08-01",
         end_timestamp="2025-08-30",
     )
-    results_json = inf.run_batch_and_format_json()
+    results_json = asyncio.run(inf.run_batch_and_format_json())
     print(json.dumps(results_json[:3], indent=2))

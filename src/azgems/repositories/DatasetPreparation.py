@@ -15,6 +15,218 @@ class DatasetPreparation:
         self.threshold_for_delay = threshold
         self.start_timestamp = start_timestamp
         self.end_timestamp = end_timestamp
+        self.client = get_cubejs_client()
+
+    def get_necessary_dataset_for_training_from_cubejs(self) -> pd.DataFrame:
+        shipment_dataset_query_1_cube = """
+            {{
+            "dimensions": [
+                "ShipmentRowFeatures.bill_id",
+                "ShipmentRowFeatures.bill_id_dup",
+                "ShipmentRowFeatures.bni_created_time",
+                "ShipmentRowFeatures.coo",
+                "ShipmentRowFeatures.days_since_ship_so_far",
+                "ShipmentRowFeatures.days_until_eta",
+                "ShipmentRowFeatures.delay_days",
+                "ShipmentRowFeatures.delivery_terms",
+                "ShipmentRowFeatures.eta_dt",
+                "ShipmentRowFeatures.item_brand",
+                "ShipmentRowFeatures.item_manufacturer",
+                "ShipmentRowFeatures.item_product_category",
+                "ShipmentRowFeatures.item_size",
+                "ShipmentRowFeatures.item_sku",
+                "ShipmentRowFeatures.lead_time_days",
+                "ShipmentRowFeatures.ocean_freight",
+                "ShipmentRowFeatures.po_date_dt",
+                "ShipmentRowFeatures.po_shipment_terms",
+                "ShipmentRowFeatures.promised_transit_days",
+                "ShipmentRowFeatures.quantity_in",
+                "ShipmentRowFeatures.receipt_dt",
+                "ShipmentRowFeatures.scac",
+                "ShipmentRowFeatures.shipment_days",
+                "ShipmentRowFeatures.shipped_dt",
+                "ShipmentRowFeatures.tariff_amount",
+                "ShipmentRowFeatures.tariff_type",
+                "ShipmentRowFeatures.total_bcy",
+                "ShipmentRowFeatures.vendor_id",
+                "ShipmentRowFeatures.vendor_name"
+            ],
+            "timeDimensions": [],
+            "filters": [
+                {{
+                "values": ["{customer_name}"],
+                "member": "ShipmentRowFeatures.customer_name",
+                "operator": "contains"
+                }}
+            ]
+            }}
+            """.format(
+            customer_name="Walmart"
+        )
+
+        shipment_dataset_query_2_cube = """{{
+            "dimensions": [
+                "ShipmentVendorAggregates.bill_id",
+                "ShipmentVendorAggregates.vendor_avg_promised_transit_days",
+                "ShipmentVendorAggregates.vendor_avg_realized_delay_days",
+                "ShipmentVendorAggregates.vendor_id",
+                "ShipmentVendorAggregates.vendor_on_time_rate",
+                "ShipmentVendorAggregates.vendor_p50_promised_transit_days",
+                "ShipmentVendorAggregates.vendor_p50_realized_delay_days",
+                "ShipmentVendorAggregates.vendor_p90_promised_transit_days",
+                "ShipmentVendorAggregates.vendor_p90_realized_delay_days",
+                "ShipmentVendorAggregates.vendor_shipments_with_receipt"
+            ],
+            "filters": [
+                {{
+                "values": [
+                    "{customer_name}"
+                ],
+                "member": "ShipmentVendorAggregates.customer_name",
+                "operator": "contains"
+                }}
+            ]
+            }}
+            """.format(
+            customer_name="Walmart"
+        )
+
+        result1 = self.client.api_call(
+            self.client.get_base_url() + "?query=" + shipment_dataset_query_1_cube,
+            "GET",
+        )
+        shipment_dataset_df1 = pd.DataFrame(result1.json()["data"])
+
+        # Strip cube name prefix
+        shipment_dataset_df1.columns = [
+            col.split(".")[-1] for col in shipment_dataset_df1.columns
+        ]
+
+        result2 = self.client.api_call(
+            self.client.get_base_url() + "?query=" + shipment_dataset_query_2_cube,
+            "GET",
+        )
+        shipment_dataset_df2 = pd.DataFrame(result2.json()["data"])
+
+        # Strip cube name prefix
+        shipment_dataset_df2.columns = [
+            col.split(".")[-1] for col in shipment_dataset_df2.columns
+        ]
+
+        shipment_dataset_df = shipment_dataset_df1.merge(
+            shipment_dataset_df2, on=["bill_id", "vendor_id"], how="left"
+        )
+
+        return shipment_dataset_df
+
+    def get_necessary_dataset_for_inference_from_cubejs(self) -> pd.DataFrame:
+        inference_cube_query_1 = """ 
+            {{
+            "dimensions": [
+                "ShipmentRowFeatures.bill_id",
+                "ShipmentRowFeatures.bill_id_dup",
+                "ShipmentRowFeatures.bni_created_time",
+                "ShipmentRowFeatures.coo",
+                "ShipmentRowFeatures.days_since_ship_so_far",
+                "ShipmentRowFeatures.days_until_eta",
+                "ShipmentRowFeatures.delay_days",
+                "ShipmentRowFeatures.delivery_terms",
+                "ShipmentRowFeatures.eta_dt",
+                "ShipmentRowFeatures.item_brand",
+                "ShipmentRowFeatures.item_manufacturer",
+                "ShipmentRowFeatures.item_product_category",
+                "ShipmentRowFeatures.item_size",
+                "ShipmentRowFeatures.item_sku",
+                "ShipmentRowFeatures.lead_time_days",
+                "ShipmentRowFeatures.ocean_freight",
+                "ShipmentRowFeatures.po_date_dt",
+                "ShipmentRowFeatures.po_shipment_terms",
+                "ShipmentRowFeatures.promised_transit_days",
+                "ShipmentRowFeatures.quantity_in",
+                "ShipmentRowFeatures.receipt_dt",
+                "ShipmentRowFeatures.scac",
+                "ShipmentRowFeatures.shipment_days",
+                "ShipmentRowFeatures.shipped_dt",
+                "ShipmentRowFeatures.tariff_amount",
+                "ShipmentRowFeatures.tariff_type",
+                "ShipmentRowFeatures.total_bcy",
+                "ShipmentRowFeatures.vendor_id",
+                "ShipmentRowFeatures.vendor_name"
+            ],
+            "timeDimensions": [],
+            "filters": [
+                {{
+                "values": [
+                    "{customer_name}"
+                ],
+                "member": "ShipmentRowFeatures.customer_name",
+                "operator": "contains"
+            }},
+                {{
+                "values": [
+                    "{start_timestamp}",
+                    "{end_timestamp}"
+                ],
+                "member": "ShipmentRowFeatures.bni_created_time",
+                "operator": "inDateRange"
+                }}
+            ]
+            }}
+            """.format(
+            customer_name=self.customer_name,
+            start_timestamp=self.start_timestamp,
+            end_timestamp=self.end_timestamp,
+        )
+
+        inference_cube_query_2 = """ {{
+            "dimensions": [
+                "ShipmentVendorAggregates.bill_id",
+                "ShipmentVendorAggregates.customer_name",
+                "ShipmentVendorAggregates.vendor_avg_promised_transit_days",
+                "ShipmentVendorAggregates.vendor_avg_realized_delay_days",
+                "ShipmentVendorAggregates.vendor_id",
+                "ShipmentVendorAggregates.vendor_on_time_rate",
+                "ShipmentVendorAggregates.vendor_p50_promised_transit_days",
+                "ShipmentVendorAggregates.vendor_p50_realized_delay_days",
+                "ShipmentVendorAggregates.vendor_p90_promised_transit_days",
+                "ShipmentVendorAggregates.vendor_p90_realized_delay_days",
+                "ShipmentVendorAggregates.vendor_shipments_with_receipt"
+            ],
+            "filters": [
+                {{
+                "values": [
+                    "{customer_name}"
+                ],
+                "member": "ShipmentVendorAggregates.customer_name",
+                "operator": "contains"
+                }}
+            ]
+            }}""".format(
+            customer_name=self.customer_name,
+        )
+        inference_result = self.client.api_call(
+            self.client.get_base_url() + "?query=" + inference_cube_query_1, "GET"
+        )
+        inference_dataset_df1 = pd.DataFrame(inference_result.json()["data"])
+        # Strip cube name prefix
+        inference_dataset_df1.columns = [
+            col.split(".")[-1] for col in inference_dataset_df1.columns
+        ]
+
+        inference_result = self.client.api_call(
+            self.client.get_base_url() + "?query=" + inference_cube_query_2, "GET"
+        )
+        inference_dataset_df2 = pd.DataFrame(inference_result.json()["data"])
+        # Strip cube name prefix
+        inference_dataset_df2.columns = [
+            col.split(".")[-1] for col in inference_dataset_df2.columns
+        ]
+
+        inference_dataset_df = inference_dataset_df1.merge(
+            inference_dataset_df2, on=["bill_id", "vendor_id"], how="left"
+        )
+
+        return inference_dataset_df
 
     def get_necessary_dataset_for_training(self) -> pd.DataFrame:
         shipment_dataset_query = """
@@ -229,9 +441,9 @@ class DatasetPreparation:
         self, method: Literal["training", "inference"] = "training"
     ) -> pd.DataFrame:
         dataset = (
-            self.get_necessary_dataset_for_training()
+            self.get_necessary_dataset_for_training_from_cubejs()
             if method == "training"
-            else self.get_necessary_dataset_for_inference()
+            else self.get_necessary_dataset_for_inference_from_cubejs()
         )
 
         dataset = dataset.fillna({"tariff_amount": 0, "ocean_freight": 0})
@@ -264,6 +476,20 @@ class DatasetPreparation:
             "lead_time_days",
             "quantity_in",
             "total_bcy",
+            "ocean_freight",
+            "tariff_amount",
+            "promised_transit_days",
+            "lead_time_days",
+            "days_since_ship_so_far",
+            # "days_until_eta",
+            "vendor_avg_promised_transit_days",
+            "vendor_p50_promised_transit_days",
+            "vendor_p90_promised_transit_days",
+            "vendor_avg_realized_delay_days",
+            "vendor_p50_realized_delay_days",
+            "vendor_p90_realized_delay_days",
+            "vendor_on_time_rate",
+            "vendor_shipments_with_receipt",
         ]
 
         for col in numeric_cols:
@@ -296,7 +522,7 @@ class DatasetPreparation:
             ]
             + date_time_columns
         )
-
+        dataset.to_csv("dataset_verification.csv", index=False)
         return dataset
 
     def get_necessary_dataset_for_inference(self) -> pd.DataFrame:
@@ -498,8 +724,11 @@ class DatasetPreparation:
 
 
 if __name__ == "__main__":
-    dataset_preparation = DatasetPreparation()
+    dataset_preparation = DatasetPreparation(
+        start_timestamp="2025-08-01", end_timestamp="2025-09-08"
+    )
     dataset = dataset_preparation.clean_dataset(
-        method="inference"
+        method="training"
     )  # testing for the logic of training dataset
     print(dataset.head())
+    print(dataset.shape)
