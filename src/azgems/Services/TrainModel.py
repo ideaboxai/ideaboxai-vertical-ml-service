@@ -317,8 +317,11 @@ class TrainModel:
         # Step 1: Load data if not provided
         if df is None:
             print("\n[1/7] Loading dataset...")
-            df = self.dataset_prep.clean_dataset()
+            df = self.dataset_prep.clean_dataset(method= "training")
+            if df.empty:
+                raise Exception("No data available for training.")
             print(f"Loaded dataset with shape: {df.shape}")
+            # df = df.drop(columns=["vendor_id","batch_in_id","batch_number","purchase_order"])
             print(df.info())
         else:
             print(f"\n[1/7] Using provided dataset with shape: {df.shape}")

@@ -733,7 +733,6 @@ class Inference:
                     end_timestamp=getattr(self, "end_timestamp", None),
                 )
                 dataset = dataset_preparation.clean_dataset(method="inference")
-                print(dataset.info())
             except Exception:
                 dataset = None
 

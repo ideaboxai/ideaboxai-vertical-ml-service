@@ -23,15 +23,21 @@ async def get_all_shipment_classifications(
     po_comitted: str = Query("Direct Sale", description="PO committed type"),
 ) -> JSONResponse:
     try:
+        if start_timestamps > end_timestamps:
+            raise HTTPException(
+                status_code=400,
+                detail="start_timestamps must be earlier than or equal to end_timestamps",
+            )
+            
         folder_path_to_check = os.path.join(
-            "models", "azgems", customer_name, "model.pkl"
+            "models", "azgems", customer_name, "ShipmentClassificationModel.joblib"
         )
 
         if not os.path.exists(folder_path_to_check):
             logger.info("Weights Not Found...Training the Model for the customers")
             print("Weights Not Found...Training the Model for the customers")
             trainer = TrainModel(customer_name=customer_name)
-            trainer.train_and_save_model()
+            trainer.run_full_pipeline()
 
         inference_engine = Inference(
             customer_name=customer_name,
@@ -43,4 +49,6 @@ async def get_all_shipment_classifications(
         return JSONResponse(status_code=status.HTTP_200_OK, content=predictions)
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        err_msg = str(e)
+        truncated_msg = err_msg[:100] + "..." if len(err_msg) > 100 else err_msg
+        raise HTTPException(status_code=500, detail=truncated_msg)

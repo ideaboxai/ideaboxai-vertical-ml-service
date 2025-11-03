@@ -1,6 +1,7 @@
 from src.azgems.data_source_connection import get_clickhouse_client, get_cubejs_client
 import pandas as pd
 from typing import Literal
+import time
 
 
 class DatasetPreparation:
@@ -22,7 +23,6 @@ class DatasetPreparation:
             {{
             "dimensions": [
                 "SHIPMENT_ROW_FEATURES.bill_id",
-                "SHIPMENT_ROW_FEATURES.bill_id_dup",
                 "SHIPMENT_ROW_FEATURES.bni_created_time",
                 "SHIPMENT_ROW_FEATURES.coo",
                 "SHIPMENT_ROW_FEATURES.days_since_ship_so_far",
@@ -61,7 +61,7 @@ class DatasetPreparation:
             ]
             }}
             """.format(
-            customer_name="Walmart"
+            customer_name=self.customer_name
         )
 
         shipment_dataset_query_2_cube = """{{
@@ -88,43 +88,49 @@ class DatasetPreparation:
             ]
             }}
             """.format(
-            customer_name="Walmart"
+            customer_name=self.customer_name
         )
 
-        result1 = self.client.api_call(
-            self.client.get_base_url() + "?query=" + shipment_dataset_query_1_cube,
-            "GET",
-        )
-        shipment_dataset_df1 = pd.DataFrame(result1.json()["data"])
+        try:
+            result1 = self.client.api_call(
+                self.client.get_base_url() + "?query=" + shipment_dataset_query_1_cube,
+                "GET",
+            )
+            shipment_dataset_df1 = pd.DataFrame(result1.json()["data"])
 
-        # Strip cube name prefix
-        shipment_dataset_df1.columns = [
-            col.split(".")[-1] for col in shipment_dataset_df1.columns
-        ]
+            shipment_dataset_df1.columns = [
+                col.split(".")[-1] for col in shipment_dataset_df1.columns
+            ]
+            time.sleep(3)
+            result2 = self.client.api_call(
+                self.client.get_base_url() + "?query=" + shipment_dataset_query_2_cube,
+                "GET",
+            )
+            shipment_dataset_df2 = pd.DataFrame(result2.json()["data"])
 
-        result2 = self.client.api_call(
-            self.client.get_base_url() + "?query=" + shipment_dataset_query_2_cube,
-            "GET",
-        )
-        shipment_dataset_df2 = pd.DataFrame(result2.json()["data"])
+            shipment_dataset_df2.columns = [
+                col.split(".")[-1] for col in shipment_dataset_df2.columns
+            ]
 
-        # Strip cube name prefix
-        shipment_dataset_df2.columns = [
-            col.split(".")[-1] for col in shipment_dataset_df2.columns
-        ]
+            shipment_dataset_df = shipment_dataset_df1.merge(
+                shipment_dataset_df2, on=["bill_id", "vendor_id"], how="left"
+            )
 
-        shipment_dataset_df = shipment_dataset_df1.merge(
-            shipment_dataset_df2, on=["bill_id", "vendor_id"], how="left"
-        )
-
-        return shipment_dataset_df
+            return shipment_dataset_df
+        except Exception as e:
+            raise Exception(
+                f"Error getting necessary dataset for training from cubejs: {e}"
+            )
+            # return pd.DataFrame()
 
     def get_necessary_dataset_for_inference_from_cubejs(self) -> pd.DataFrame:
         inference_cube_query_1 = """ 
             {{
             "dimensions": [
+                "SHIPMENT_ROW_FEATURES.batch_in_id",
+                "SHIPMENT_ROW_FEATURES.batch_number",
+                "SHIPMENT_ROW_FEATURES.customer_po",
                 "SHIPMENT_ROW_FEATURES.bill_id",
-                "SHIPMENT_ROW_FEATURES.bill_id_dup",
                 "SHIPMENT_ROW_FEATURES.bni_created_time",
                 "SHIPMENT_ROW_FEATURES.coo",
                 "SHIPMENT_ROW_FEATURES.days_since_ship_so_far",
@@ -207,15 +213,18 @@ class DatasetPreparation:
         inference_result = self.client.api_call(
             self.client.get_base_url() + "?query=" + inference_cube_query_1, "GET"
         )
+        # print(inference_result.json())
         inference_dataset_df1 = pd.DataFrame(inference_result.json()["data"])
         # Strip cube name prefix
         inference_dataset_df1.columns = [
             col.split(".")[-1] for col in inference_dataset_df1.columns
         ]
 
+        time.sleep(3)
         inference_result = self.client.api_call(
             self.client.get_base_url() + "?query=" + inference_cube_query_2, "GET"
         )
+        # print(inference_result.json())
         inference_dataset_df2 = pd.DataFrame(inference_result.json()["data"])
         # Strip cube name prefix
         inference_dataset_df2.columns = [
@@ -233,7 +242,6 @@ class DatasetPreparation:
             SELECT
             -- Primary keys / bookkeeping
             bni.bill_id                                         AS bill_id,
-            b.bill_id                                           AS bill_id_dup,
             v.vendor_id                                         AS vendor_id,
             v.vendor_name                                       AS vendor_name,
             bni.created_time                                    AS bni_created_time,
@@ -440,97 +448,99 @@ class DatasetPreparation:
     def clean_dataset(
         self, method: Literal["training", "inference"] = "training"
     ) -> pd.DataFrame:
-        dataset = (
-            self.get_necessary_dataset_for_training_from_cubejs()
-            if method == "training"
-            else self.get_necessary_dataset_for_inference_from_cubejs()
-        )
+        try:
+            dataset = (
+                self.get_necessary_dataset_for_training_from_cubejs()
+                if method == "training"
+                else self.get_necessary_dataset_for_inference_from_cubejs()
+            )
 
-        dataset = dataset.fillna({"tariff_amount": 0, "ocean_freight": 0})
-        dataset = dataset.replace({"tariff_type": {"": "Not Applicable"}})
-        dataset = dataset.drop_duplicates()
+            dataset = dataset.fillna({"tariff_amount": 0, "ocean_freight": 0})
+            dataset = dataset.replace({"tariff_type": {"": "Not Applicable"}})
+            dataset = dataset.drop_duplicates()
 
-        date_time_columns = ["shipped_dt", "eta_dt", "receipt_dt"]
-        dataset[date_time_columns] = dataset[date_time_columns].apply(
-            pd.to_datetime, errors="coerce"
-        )
+            date_time_columns = ["shipped_dt", "eta_dt", "receipt_dt"]
+            dataset[date_time_columns] = dataset[date_time_columns].apply(
+                pd.to_datetime, errors="coerce"
+            )
 
-        shipped_dt = dataset["shipped_dt"]
-        dataset["shipped_date_weekday"] = shipped_dt.dt.weekday
-        dataset["shipped_date_month"] = shipped_dt.dt.month
-        dataset["shipped_date_day"] = shipped_dt.dt.day
+            shipped_dt = dataset["shipped_dt"]
+            dataset["shipped_date_weekday"] = shipped_dt.dt.weekday
+            dataset["shipped_date_month"] = shipped_dt.dt.month
+            dataset["shipped_date_day"] = shipped_dt.dt.day
 
-        dataset["total_bcy"] = (
-            dataset["total_bcy"]
-            .astype(str)
-            .str.replace("USD", "", regex=False)
-            .str.replace(",", "", regex=False)
-            .str.strip()
-            .replace("", "0")
-            .astype(float)
-        )
+            dataset["total_bcy"] = (
+                dataset["total_bcy"]
+                .astype(str)
+                .str.replace("USD", "", regex=False)
+                .str.replace(",", "", regex=False)
+                .str.strip()
+                .replace("", "0")
+                .astype(float)
+            )
 
-        numeric_cols = [
-            "delay_days",
-            "shipment_days",
-            "lead_time_days",
-            "quantity_in",
-            "total_bcy",
-            "ocean_freight",
-            "tariff_amount",
-            "promised_transit_days",
-            "lead_time_days",
-            "days_since_ship_so_far",
-            # "days_until_eta",
-            "vendor_avg_promised_transit_days",
-            "vendor_p50_promised_transit_days",
-            "vendor_p90_promised_transit_days",
-            "vendor_avg_realized_delay_days",
-            "vendor_p50_realized_delay_days",
-            "vendor_p90_realized_delay_days",
-            "vendor_on_time_rate",
-            "vendor_shipments_with_receipt",
-        ]
-
-        for col in numeric_cols:
-            dataset[col] = pd.to_numeric(dataset[col], errors="coerce")
-            dataset[col] = dataset[col].where(dataset[col] >= 0)
-
-        distance_dict = {
-            "INDIA": 11000,
-            "CHINA": 6000,
-            "INDONESIA": 8200,
-            "VIETNAM": 6200,
-            "ECUADOR": 2100,
-            "THAILAND": 8100,
-        }
-        dataset["distance_nm"] = dataset["coo"].map(distance_dict)
-
-        dataset = dataset.dropna() if method == "training" else dataset
-
-        dataset = dataset.drop(
-            columns=[
-                "coo",
-                "item_product_category",
-                "bill_id",
-                "bill_id_dup",
-                "vendor_id",
-                "bni_created_time",
-                "po_date_dt",
-                "receipt_dt",
-                "vendor_name",
+            numeric_cols = [
+                "delay_days",
+                "shipment_days",
+                "lead_time_days",
+                "quantity_in",
+                "total_bcy",
+                "ocean_freight",
+                "tariff_amount",
+                "promised_transit_days",
+                "lead_time_days",
+                "days_since_ship_so_far",
+                "days_until_eta",
+                "vendor_avg_promised_transit_days",
+                "vendor_p50_promised_transit_days",
+                "vendor_p90_promised_transit_days",
+                "vendor_avg_realized_delay_days",
+                "vendor_p50_realized_delay_days",
+                "vendor_p90_realized_delay_days",
+                "vendor_on_time_rate",
+                "vendor_shipments_with_receipt",
             ]
-            + date_time_columns
-        )
-        dataset.to_csv("dataset_verification.csv", index=False)
-        return dataset
+
+            for col in numeric_cols:
+                dataset[col] = pd.to_numeric(dataset[col], errors="coerce")
+                # dataset[col] = dataset[col].where(dataset[col] >= 0)
+
+            distance_dict = {
+                "INDIA": 11000,
+                "CHINA": 6000,
+                "INDONESIA": 8200,
+                "VIETNAM": 6200,
+                "ECUADOR": 2100,
+                "THAILAND": 8100,
+            }
+            dataset["distance_nm"] = dataset["coo"].map(distance_dict)
+
+            dataset = dataset.dropna() if method == "training" else dataset
+
+            dataset = dataset.drop(
+                columns=[
+                    "coo",
+                    "item_product_category",
+                    "bill_id",
+                    # "vendor_id","batch_in_id","batch_number","purchase_order" # will drop at the time of training
+                    "bni_created_time",
+                    "po_date_dt",
+                    "receipt_dt",
+                    "vendor_name",
+                ]
+                + date_time_columns
+            )
+            dataset.to_csv("dataset_verification.csv", index=False)
+            return dataset
+        except Exception as e:
+            print(f"Error getting and cleaning necessary dataset: {e}")
+            return pd.DataFrame()
 
     def get_necessary_dataset_for_inference(self) -> pd.DataFrame:
         inference_data_query = """ 
                 SELECT
                 -- Primary keys / bookkeeping
                 bni.bill_id                                         AS bill_id,
-                b.bill_id                                           AS bill_id_dup,
                 v.vendor_id                                         AS vendor_id,
                 v.vendor_name                                       AS vendor_name,
                 bni.created_time                                    AS bni_created_time,
