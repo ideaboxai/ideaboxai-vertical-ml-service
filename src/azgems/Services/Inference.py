@@ -39,7 +39,7 @@ class MessageItem(BaseModel):
     )
     text: str = Field(
         ...,
-        description="Human-readable message to display in the UI (single line or short sentence).",
+        description="Human-readable message to display in the UI (single line or short sentence explaining the reason behind the predicted delay).",
     )
 
 

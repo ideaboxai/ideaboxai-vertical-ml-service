@@ -21,41 +21,41 @@ class DatasetPreparation:
         shipment_dataset_query_1_cube = """
             {{
             "dimensions": [
-                "ShipmentRowFeatures.bill_id",
-                "ShipmentRowFeatures.bill_id_dup",
-                "ShipmentRowFeatures.bni_created_time",
-                "ShipmentRowFeatures.coo",
-                "ShipmentRowFeatures.days_since_ship_so_far",
-                "ShipmentRowFeatures.days_until_eta",
-                "ShipmentRowFeatures.delay_days",
-                "ShipmentRowFeatures.delivery_terms",
-                "ShipmentRowFeatures.eta_dt",
-                "ShipmentRowFeatures.item_brand",
-                "ShipmentRowFeatures.item_manufacturer",
-                "ShipmentRowFeatures.item_product_category",
-                "ShipmentRowFeatures.item_size",
-                "ShipmentRowFeatures.item_sku",
-                "ShipmentRowFeatures.lead_time_days",
-                "ShipmentRowFeatures.ocean_freight",
-                "ShipmentRowFeatures.po_date_dt",
-                "ShipmentRowFeatures.po_shipment_terms",
-                "ShipmentRowFeatures.promised_transit_days",
-                "ShipmentRowFeatures.quantity_in",
-                "ShipmentRowFeatures.receipt_dt",
-                "ShipmentRowFeatures.scac",
-                "ShipmentRowFeatures.shipment_days",
-                "ShipmentRowFeatures.shipped_dt",
-                "ShipmentRowFeatures.tariff_amount",
-                "ShipmentRowFeatures.tariff_type",
-                "ShipmentRowFeatures.total_bcy",
-                "ShipmentRowFeatures.vendor_id",
-                "ShipmentRowFeatures.vendor_name"
+                "SHIPMENT_ROW_FEATURES.bill_id",
+                "SHIPMENT_ROW_FEATURES.bill_id_dup",
+                "SHIPMENT_ROW_FEATURES.bni_created_time",
+                "SHIPMENT_ROW_FEATURES.coo",
+                "SHIPMENT_ROW_FEATURES.days_since_ship_so_far",
+                "SHIPMENT_ROW_FEATURES.days_until_eta",
+                "SHIPMENT_ROW_FEATURES.delay_days",
+                "SHIPMENT_ROW_FEATURES.delivery_terms",
+                "SHIPMENT_ROW_FEATURES.eta_dt",
+                "SHIPMENT_ROW_FEATURES.item_brand",
+                "SHIPMENT_ROW_FEATURES.item_manufacturer",
+                "SHIPMENT_ROW_FEATURES.item_product_category",
+                "SHIPMENT_ROW_FEATURES.item_size",
+                "SHIPMENT_ROW_FEATURES.item_sku",
+                "SHIPMENT_ROW_FEATURES.lead_time_days",
+                "SHIPMENT_ROW_FEATURES.ocean_freight",
+                "SHIPMENT_ROW_FEATURES.po_date_dt",
+                "SHIPMENT_ROW_FEATURES.po_shipment_terms",
+                "SHIPMENT_ROW_FEATURES.promised_transit_days",
+                "SHIPMENT_ROW_FEATURES.quantity_in",
+                "SHIPMENT_ROW_FEATURES.receipt_dt",
+                "SHIPMENT_ROW_FEATURES.scac",
+                "SHIPMENT_ROW_FEATURES.shipment_days",
+                "SHIPMENT_ROW_FEATURES.shipped_dt",
+                "SHIPMENT_ROW_FEATURES.tariff_amount",
+                "SHIPMENT_ROW_FEATURES.tariff_type",
+                "SHIPMENT_ROW_FEATURES.total_bcy",
+                "SHIPMENT_ROW_FEATURES.vendor_id",
+                "SHIPMENT_ROW_FEATURES.vendor_name"
             ],
             "timeDimensions": [],
             "filters": [
                 {{
                 "values": ["{customer_name}"],
-                "member": "ShipmentRowFeatures.customer_name",
+                "member": "SHIPMENT_ROW_FEATURES.customer_name",
                 "operator": "contains"
                 }}
             ]
@@ -66,23 +66,23 @@ class DatasetPreparation:
 
         shipment_dataset_query_2_cube = """{{
             "dimensions": [
-                "ShipmentVendorAggregates.bill_id",
-                "ShipmentVendorAggregates.vendor_avg_promised_transit_days",
-                "ShipmentVendorAggregates.vendor_avg_realized_delay_days",
-                "ShipmentVendorAggregates.vendor_id",
-                "ShipmentVendorAggregates.vendor_on_time_rate",
-                "ShipmentVendorAggregates.vendor_p50_promised_transit_days",
-                "ShipmentVendorAggregates.vendor_p50_realized_delay_days",
-                "ShipmentVendorAggregates.vendor_p90_promised_transit_days",
-                "ShipmentVendorAggregates.vendor_p90_realized_delay_days",
-                "ShipmentVendorAggregates.vendor_shipments_with_receipt"
+                "SHIPMENT_VENDOR_AGGREGATES.bill_id",
+                "SHIPMENT_VENDOR_AGGREGATES.vendor_avg_promised_transit_days",
+                "SHIPMENT_VENDOR_AGGREGATES.vendor_avg_realized_delay_days",
+                "SHIPMENT_VENDOR_AGGREGATES.vendor_id",
+                "SHIPMENT_VENDOR_AGGREGATES.vendor_on_time_rate",
+                "SHIPMENT_VENDOR_AGGREGATES.vendor_p50_promised_transit_days",
+                "SHIPMENT_VENDOR_AGGREGATES.vendor_p50_realized_delay_days",
+                "SHIPMENT_VENDOR_AGGREGATES.vendor_p90_promised_transit_days",
+                "SHIPMENT_VENDOR_AGGREGATES.vendor_p90_realized_delay_days",
+                "SHIPMENT_VENDOR_AGGREGATES.vendor_shipments_with_receipt"
             ],
             "filters": [
                 {{
                 "values": [
                     "{customer_name}"
                 ],
-                "member": "ShipmentVendorAggregates.customer_name",
+                "member": "SHIPMENT_VENDOR_AGGREGATES.customer_name",
                 "operator": "contains"
                 }}
             ]
@@ -123,35 +123,35 @@ class DatasetPreparation:
         inference_cube_query_1 = """ 
             {{
             "dimensions": [
-                "ShipmentRowFeatures.bill_id",
-                "ShipmentRowFeatures.bill_id_dup",
-                "ShipmentRowFeatures.bni_created_time",
-                "ShipmentRowFeatures.coo",
-                "ShipmentRowFeatures.days_since_ship_so_far",
-                "ShipmentRowFeatures.days_until_eta",
-                "ShipmentRowFeatures.delay_days",
-                "ShipmentRowFeatures.delivery_terms",
-                "ShipmentRowFeatures.eta_dt",
-                "ShipmentRowFeatures.item_brand",
-                "ShipmentRowFeatures.item_manufacturer",
-                "ShipmentRowFeatures.item_product_category",
-                "ShipmentRowFeatures.item_size",
-                "ShipmentRowFeatures.item_sku",
-                "ShipmentRowFeatures.lead_time_days",
-                "ShipmentRowFeatures.ocean_freight",
-                "ShipmentRowFeatures.po_date_dt",
-                "ShipmentRowFeatures.po_shipment_terms",
-                "ShipmentRowFeatures.promised_transit_days",
-                "ShipmentRowFeatures.quantity_in",
-                "ShipmentRowFeatures.receipt_dt",
-                "ShipmentRowFeatures.scac",
-                "ShipmentRowFeatures.shipment_days",
-                "ShipmentRowFeatures.shipped_dt",
-                "ShipmentRowFeatures.tariff_amount",
-                "ShipmentRowFeatures.tariff_type",
-                "ShipmentRowFeatures.total_bcy",
-                "ShipmentRowFeatures.vendor_id",
-                "ShipmentRowFeatures.vendor_name"
+                "SHIPMENT_ROW_FEATURES.bill_id",
+                "SHIPMENT_ROW_FEATURES.bill_id_dup",
+                "SHIPMENT_ROW_FEATURES.bni_created_time",
+                "SHIPMENT_ROW_FEATURES.coo",
+                "SHIPMENT_ROW_FEATURES.days_since_ship_so_far",
+                "SHIPMENT_ROW_FEATURES.days_until_eta",
+                "SHIPMENT_ROW_FEATURES.delay_days",
+                "SHIPMENT_ROW_FEATURES.delivery_terms",
+                "SHIPMENT_ROW_FEATURES.eta_dt",
+                "SHIPMENT_ROW_FEATURES.item_brand",
+                "SHIPMENT_ROW_FEATURES.item_manufacturer",
+                "SHIPMENT_ROW_FEATURES.item_product_category",
+                "SHIPMENT_ROW_FEATURES.item_size",
+                "SHIPMENT_ROW_FEATURES.item_sku",
+                "SHIPMENT_ROW_FEATURES.lead_time_days",
+                "SHIPMENT_ROW_FEATURES.ocean_freight",
+                "SHIPMENT_ROW_FEATURES.po_date_dt",
+                "SHIPMENT_ROW_FEATURES.po_shipment_terms",
+                "SHIPMENT_ROW_FEATURES.promised_transit_days",
+                "SHIPMENT_ROW_FEATURES.quantity_in",
+                "SHIPMENT_ROW_FEATURES.receipt_dt",
+                "SHIPMENT_ROW_FEATURES.scac",
+                "SHIPMENT_ROW_FEATURES.shipment_days",
+                "SHIPMENT_ROW_FEATURES.shipped_dt",
+                "SHIPMENT_ROW_FEATURES.tariff_amount",
+                "SHIPMENT_ROW_FEATURES.tariff_type",
+                "SHIPMENT_ROW_FEATURES.total_bcy",
+                "SHIPMENT_ROW_FEATURES.vendor_id",
+                "SHIPMENT_ROW_FEATURES.vendor_name"
             ],
             "timeDimensions": [],
             "filters": [
@@ -159,7 +159,7 @@ class DatasetPreparation:
                 "values": [
                     "{customer_name}"
                 ],
-                "member": "ShipmentRowFeatures.customer_name",
+                "member": "SHIPMENT_ROW_FEATURES.customer_name",
                 "operator": "contains"
             }},
                 {{
@@ -167,7 +167,7 @@ class DatasetPreparation:
                     "{start_timestamp}",
                     "{end_timestamp}"
                 ],
-                "member": "ShipmentRowFeatures.bni_created_time",
+                "member": "SHIPMENT_ROW_FEATURES.bni_created_time",
                 "operator": "inDateRange"
                 }}
             ]
@@ -180,24 +180,24 @@ class DatasetPreparation:
 
         inference_cube_query_2 = """ {{
             "dimensions": [
-                "ShipmentVendorAggregates.bill_id",
-                "ShipmentVendorAggregates.customer_name",
-                "ShipmentVendorAggregates.vendor_avg_promised_transit_days",
-                "ShipmentVendorAggregates.vendor_avg_realized_delay_days",
-                "ShipmentVendorAggregates.vendor_id",
-                "ShipmentVendorAggregates.vendor_on_time_rate",
-                "ShipmentVendorAggregates.vendor_p50_promised_transit_days",
-                "ShipmentVendorAggregates.vendor_p50_realized_delay_days",
-                "ShipmentVendorAggregates.vendor_p90_promised_transit_days",
-                "ShipmentVendorAggregates.vendor_p90_realized_delay_days",
-                "ShipmentVendorAggregates.vendor_shipments_with_receipt"
+                "SHIPMENT_VENDOR_AGGREGATES.bill_id",
+                "SHIPMENT_VENDOR_AGGREGATES.customer_name",
+                "SHIPMENT_VENDOR_AGGREGATES.vendor_avg_promised_transit_days",
+                "SHIPMENT_VENDOR_AGGREGATES.vendor_avg_realized_delay_days",
+                "SHIPMENT_VENDOR_AGGREGATES.vendor_id",
+                "SHIPMENT_VENDOR_AGGREGATES.vendor_on_time_rate",
+                "SHIPMENT_VENDOR_AGGREGATES.vendor_p50_promised_transit_days",
+                "SHIPMENT_VENDOR_AGGREGATES.vendor_p50_realized_delay_days",
+                "SHIPMENT_VENDOR_AGGREGATES.vendor_p90_promised_transit_days",
+                "SHIPMENT_VENDOR_AGGREGATES.vendor_p90_realized_delay_days",
+                "SHIPMENT_VENDOR_AGGREGATES.vendor_shipments_with_receipt"
             ],
             "filters": [
                 {{
                 "values": [
                     "{customer_name}"
                 ],
-                "member": "ShipmentVendorAggregates.customer_name",
+                "member": "SHIPMENT_VENDOR_AGGREGATES.customer_name",
                 "operator": "contains"
                 }}
             ]
