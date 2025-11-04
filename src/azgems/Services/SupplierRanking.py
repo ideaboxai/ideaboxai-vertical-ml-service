@@ -1,3 +1,4 @@
+from pyparsing import col
 from src.azgems.data_source_connection import get_clickhouse_client, get_cubejs_client
 import pandas as pd
 from pymcdm.methods import TOPSIS
@@ -139,6 +140,11 @@ class SupplierRanking:
             "total_shipments",
         ]
         supplier_data_df = supplier_data_df[keep_columns]
+        for col in supplier_data_df.columns:
+            if col != "vendor_name":
+                supplier_data_df[col] = pd.to_numeric(
+                    supplier_data_df[col], errors="coerce"
+                )
         weights = [0.15, 0.15, 0.15, 0.22, 0.1, 0.13, 0.1]
         types = [1, -1, 1, 1, 1, 1, 1]
 
