@@ -27,7 +27,7 @@ class CubeJSClient:
 
                 status = True
                 while status:
-                    response = requests.get(url, headers=headers, params=payload_data)
+                    response = requests.get(url, headers=headers, params=query_params)
                     if response.status_code == 200 and "error" in response.json():
                         print(
                             "Cubejs response with continue wait. retrying after a seconds"
