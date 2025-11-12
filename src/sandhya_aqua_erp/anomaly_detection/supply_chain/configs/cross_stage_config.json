@@ -4,7 +4,7 @@
         "repository_class": "YieldRepository",
         "features": [
             {
-                "name": "GRADING.count_per_pound",
+                "name": "INDENT_GRN.count_per_pound",
                 "strategies": [
                     {
                         "name": "iqr",
@@ -42,7 +42,7 @@
                 ]
             },
             {
-                "name": "GRADING.grading_weight",
+                "name": "INDENT_GRN.hl_weight",
                 "strategies": [
                     {
                         "name": "iqr",
@@ -67,7 +67,7 @@
         "repository_class": "YieldRepository",
         "features": [
             {
-                "name": "SOAKING.time_minutes",
+                "name": "SOAKING_ALERT.soak_time",
                 "strategies": [
                     {
                         "name": "iqr",
@@ -86,7 +86,7 @@
                 ]
             },
             {
-                "name": "SOAKING.temperature",
+                "name": "SOAKING_ALERT.count_per_pound",
                 "strategies": [
                     {
                         "name": "iqr",
@@ -105,45 +105,7 @@
                 ]
             },
             {
-                "name": "GRADING.yield",
-                "strategies": [
-                    {
-                        "name": "iqr",
-                        "params": {
-                            "iqr_multiplier": 1.5,
-                            "is_non_negative_feature": true
-                        }
-                    },
-                    {
-                        "name": "mad",
-                        "params": {
-                            "mad_multiplier": 3.5,
-                            "is_non_negative_feature": true
-                        }
-                    }
-                ]
-            },
-            {
-                "name": "SOAKING.count_per_pound",
-                "strategies": [
-                    {
-                        "name": "iqr",
-                        "params": {
-                            "iqr_multiplier": 1.5,
-                            "is_non_negative_feature": true
-                        }
-                    },
-                    {
-                        "name": "mad",
-                        "params": {
-                            "mad_multiplier": 3.5,
-                            "is_non_negative_feature": true
-                        }
-                    }
-                ]
-            },
-            {
-                "name": "SOAKING.soaking_weight",
+                "name": "SOAKING_ALERT.soaking_weight",
                 "strategies": [
                     {
                         "name": "iqr",
