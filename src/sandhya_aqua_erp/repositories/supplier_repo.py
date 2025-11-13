@@ -43,8 +43,8 @@ class SupplierRepository(BaseRepository):
                         g.count as hon_count,
                         g.quantity as hon_weight,
                         p.created_at as Grading_Created_dt,
-                        FLOOR(SUM(v.weight) - (p.crate_weight * COUNT(v.crates))) AS hl_weight,
-                        ((SUM(v.weight) - (p.crate_weight * COUNT(v.crates))) / g.quantity) * 100 AS grading_yield,
+                        FLOOR(SUM(v.weight - (p.crate_weight * v.crates))) AS hl_weight,
+                        ((SUM(v.weight - (p.crate_weight * v.crates))) / g.quantity) * 100 AS grading_yield,
                         GROUP_CONCAT(DISTINCT v.sale_order ORDER BY v.sale_order ASC SEPARATOR ', ') AS grading_sale_orders
                     FROM
                         erpx_dev_rm_procurement.grn_items g
