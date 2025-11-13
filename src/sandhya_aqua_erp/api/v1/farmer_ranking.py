@@ -38,12 +38,16 @@ async def trigger_farmer_ranking(
                 return JSONResponse(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                     content={
-                        "message": "Failed to rank farmers and insert into database."
+                        "message": "Failed to rank farmers and insert into database.",
+                        "data": {"result": "Failed to rank Farmers"},
                     },
                 )
         return JSONResponse(
             status_code=status.HTTP_200_OK,
-            content={"message": "Farmer ranking process completed successfully."},
+            content={
+                "message": "Farmer ranking process completed successfully.",
+                "data": {"result": "Farmer ranking process completed successfully."},
+            },
         )
     except HTTPException:
         raise
