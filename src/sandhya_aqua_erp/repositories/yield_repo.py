@@ -442,15 +442,13 @@ class YieldRepository:
             "dimensions": [
                 "INDENT_GRN.plant_lot_number",
                 "INDENT_GRN.species",
-                "GRADING.count_per_pound",
+                "INDENT_GRN.count_per_pound",
                 "INDENT_GRN.yield",
                 "INDENT_GRN.updated_at",
-                "GRADING.grading_weight",
+                "INDENT_GRN.hl_weight",
             ],
-            "order": {"INDENT_GRN.plant_lot_number": "asc"},
-            "filters": [
-                {"member": "GRADING.grading_count", "operator": "gte", "values": ["0"]}
-            ],
+            "order": {"INDENT_GRN.created_at": "desc"},
+            "filters": [],
         }
         params = self._build_date_filter(
             query_param=query_params,
@@ -480,22 +478,22 @@ class YieldRepository:
         cube_client = CubeJSClient()
         query_params = {
             "dimensions": [
-                "SOAKING.plant_lot_number",
-                "SOAKING.count_per_pound",
-                "SOAKING.sku",
-                "SOAKING.time_minutes",
-                "SOAKING.temperature",
-                "SOAKING.unit_id",
-                "SOAKING.updated_at",
-                "SOAKING.soaking_weight",
+                "SOAKING_ALERT.plant_lot_number",
+                "SOAKING_ALERT.count_per_pound",
+                "GRADING.sku",
+                "SOAKING_ALERT.soak_time",
+                "SOAKING_ALERT.unit_name",
+                "SOAKING_ALERT.updated_at",
+                "SOAKING_ALERT.soaking_weight",
             ],
-            "order": {"GRADING.avg_soaking_yield": "desc"},
-            "measures": ["GRADING.yield"],
-            "filters": [{"member": "SOAKING.sku", "operator": "set"}],
+            "order": {"SOAKING_ALERT.created_at": "desc"},
+            "measures": ["GRADING.soaking_yield"],
+            "filters": [{"member": "SOAKING_ALERT.sku", "operator": "set"}],
         }
+
         params = self._build_date_filter(
             query_param=query_params,
-            timestamp_column="SOAKING.updated_at",
+            timestamp_column="SOAKING_ALERT.updated_at",
             timestamp1=timestamp1,
             timestamp2=timestamp2,
             operator=operator,
@@ -521,14 +519,14 @@ class YieldRepository:
         cube_client = CubeJSClient()
         query_params = {
             "dimensions": [
-                "PACKING_YIELD.unit_id",
+                "PACKING_YIELD.unit_name",
                 "PACKING_YIELD.sku",
                 "PACKING_YIELD.sale_order",
                 "PACKING_YIELD.yield",
                 "PACKING_YIELD.pak_wt",
                 "PACKING_YIELD.updated_at",
             ],
-            "order": {"PACKING_YIELD.plant_lot_number": "asc"},
+            "order": {"PACKING_YIELD.created_at": "desc"},
             "filters": [{"member": "PACKING_YIELD.yield", "operator": "set"}],
         }
         params = self._build_date_filter(
