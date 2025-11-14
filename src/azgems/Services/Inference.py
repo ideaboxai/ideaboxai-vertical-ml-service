@@ -562,7 +562,7 @@ class Inference:
             )
 
             if explanation and hasattr(explanation, "messages"):
-                return [message.text + ',' for message in explanation.messages]
+                return [message.text + "," for message in explanation.messages]
             return None
         except Exception as e:
             print(f"Error generating LLM explanation: {e}")
@@ -785,8 +785,24 @@ class Inference:
             if x is None:
                 return "N/A"
             try:
-                parts = [s.strip() for s in x if isinstance(s, str) and s.strip()]
-                return " ".join(parts) if parts else "N/A"
+                html_parts = []
+                for s in x:
+                    if not isinstance(s, str) or not s.strip():
+                        continue
+
+                    # remove trailing comma
+                    s = s.rstrip(",").strip()
+
+                    # split title and description
+                    if ":" in s:
+                        title, desc = s.split(":", 1)
+                        title = f"<b>{title.strip()}:</b>"
+                        desc = desc.strip()
+                        html_parts.append(f"{title} {desc}")
+                    else:
+                        html_parts.append(s)
+
+                return "<br>".join(html_parts) if html_parts else "N/A"
             except Exception:
                 return "N/A"
 
@@ -843,7 +859,7 @@ class Inference:
             payload.append(
                 {
                     "batch_in_id": batch_in_id,
-                    "title": f"Shipment may be delayed for batch number: {batch_in_id}",
+                    "title": f"Shipment may be delayed for batch number: {str(customer_po)}",
                     "prediction": "delayed",
                     "message": msg,
                     "customer_name": self.customer_name or "",
