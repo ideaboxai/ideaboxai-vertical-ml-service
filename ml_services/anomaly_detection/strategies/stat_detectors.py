@@ -11,37 +11,51 @@ class IQRDetector(BaseAnomalyDetector):
     """
 
     def fit(self, data: pd.DataFrame):
-        data = data.dropna()
+        try:
+            data = data.dropna()
+            if isinstance(data, pd.DataFrame):
+                column = data.columns[0]
+                values = data[column]
+            else:
+                values = data
 
-        q1 = data.quantile(0.25)
-        q2 = data.quantile(0.50)
-        q3 = data.quantile(0.75)
-        iqr = q3 - q1
-        multiplier = self.params.get("iqr_multiplier", 1.5)
+            values = pd.to_numeric(values, errors="coerce").dropna()
 
-        # Features can be non-negative or percentages
-        is_non_negative_feature = self.params.get("is_non_negative_feature", True)
+            # Convert to float if necessary
+            q1 = values.quantile(0.25)
+            q2 = values.quantile(0.50)
+            q3 = values.quantile(0.75)
+            iqr = q3 - q1
+            multiplier = self.params.get("iqr_multiplier", 1.5)
 
-        if is_non_negative_feature:
-            lower_bound = max(0, q1 - multiplier * iqr)
-        else:
-            lower_bound = q1 - multiplier * iqr
+            # Features can be non-negative or percentages
+            is_non_negative_feature = self.params.get("is_non_negative_feature", True)
 
-        upper_bound = q3 + multiplier * iqr
+            if is_non_negative_feature:
+                lower_bound = max(0, q1 - multiplier * iqr)
+            else:
+                lower_bound = q1 - multiplier * iqr
 
-        print(f"IQRDetector fitted. Lower: {lower_bound:.2f}, Upper: {upper_bound:.2f}")
+            upper_bound = q3 + multiplier * iqr
 
-        thresholds = {"lower_bound": lower_bound, "upper_bound": upper_bound}
-        stat_values = {
-            "q1": q1,
-            "q2": q2,
-            "q3": q3,
-            "iqr": iqr,
-            "minimum": lower_bound,
-            "maximum": upper_bound,
-        }
+            print(
+                f"IQRDetector fitted. Lower: {lower_bound:.2f}, Upper: {upper_bound:.2f}"
+            )
 
-        return thresholds, stat_values
+            thresholds = {"lower_bound": lower_bound, "upper_bound": upper_bound}
+            stat_values = {
+                "q1": q1,
+                "q2": q2,
+                "q3": q3,
+                "iqr": iqr,
+                "minimum": lower_bound,
+                "maximum": upper_bound,
+            }
+
+            return thresholds, stat_values
+        except Exception as e:
+            print(f"Error in IQRDetector fit: {e}")
+            return None, None
 
     def predict(self, data: pd.DataFrame) -> pd.Series:
         pass
@@ -55,33 +69,42 @@ class ZScoreDetector(BaseAnomalyDetector):
     """
 
     def fit(self, data: pd.DataFrame):
-        data = data.dropna()
-        if isinstance(data, pd.DataFrame):
-            column = data.columns[0]
-            values = data[column]
-        else:
-            values = data
-        mean_ = values.mean()
+        try:
+            data = data.dropna()
+            if isinstance(data, pd.DataFrame):
+                column = data.columns[0]
+                values = data[column]
+            else:
+                values = data
+            values = pd.to_numeric(values, errors="coerce").dropna()
+            mean_ = values.mean()
 
-        is_non_negative_feature = self.params.get("is_non_negative_feature", True)
+            is_non_negative_feature = self.params.get("is_non_negative_feature", True)
 
-        std_ = values.std()
-        z_max_threshold = self.params.get("z_max_threshold", 3.0)
+            std_ = values.std()
+            z_max_threshold = self.params.get("z_max_threshold", 3.0)
 
-        print(
-            f"ZScoreDetector fitted. Mean: {mean_:.2f}, Std: {std_:.2f}, Z-Max Threshold: {z_max_threshold:.2f}"
-        )
+            print(
+                f"ZScoreDetector fitted. Mean: {mean_:.2f}, Std: {std_:.2f}, Z-Max Threshold: {z_max_threshold:.2f}"
+            )
 
-        if is_non_negative_feature:
-            lower_bound = max(0, mean_ - z_max_threshold * std_)
-        else:
-            lower_bound = mean_ - z_max_threshold * std_
-        upper_bound = mean_ + z_max_threshold * std_
+            if is_non_negative_feature:
+                lower_bound = max(0, mean_ - z_max_threshold * std_)
+            else:
+                lower_bound = mean_ - z_max_threshold * std_
+            upper_bound = mean_ + z_max_threshold * std_
 
-        thresholds = {"lower_bound": lower_bound, "upper_bound": upper_bound}
-        stat_values = {"mean": mean_, "std": std_, "z_max_threshold": z_max_threshold}
+            thresholds = {"lower_bound": lower_bound, "upper_bound": upper_bound}
+            stat_values = {
+                "mean": mean_,
+                "std": std_,
+                "z_max_threshold": z_max_threshold,
+            }
 
-        return thresholds, stat_values
+            return thresholds, stat_values
+        except Exception as e:
+            print(f"Error in ZScoreDetector fit: {e}")
+            return None, None
 
     def predict(self, data: pd.DataFrame) -> pd.Series:
         pass
@@ -95,29 +118,34 @@ class MADDetector(BaseAnomalyDetector):
     """
 
     def fit(self, data: pd.DataFrame):
-        data = data.dropna()
-        # Handle both DataFrame and Series input
-        if isinstance(data, pd.DataFrame):
-            column = data.columns[0]
-            values = data[column]
-        else:
-            values = data
+        try:
+            data = data.dropna()
+            # Handle both DataFrame and Series input
+            if isinstance(data, pd.DataFrame):
+                column = data.columns[0]
+                values = data[column]
+            else:
+                values = data
 
-        median = values.median()
-        mad = np.median(np.abs(values - median))
-        multiplier = self.params.get("mad_multiplier", 3.5)
+            values = pd.to_numeric(values, errors="coerce").dropna()
+            median = values.median()
+            mad = np.median(np.abs(values - median))
+            multiplier = self.params.get("mad_multiplier", 3.5)
 
-        is_non_negative_feature = self.params.get("is_non_negative_feature", True)
+            is_non_negative_feature = self.params.get("is_non_negative_feature", True)
 
-        if is_non_negative_feature:
-            lower_bound = max(0, median - multiplier * mad)
-        else:
-            lower_bound = median - multiplier * mad
-        upper_bound = median + multiplier * mad
+            if is_non_negative_feature:
+                lower_bound = max(0, median - multiplier * mad)
+            else:
+                lower_bound = median - multiplier * mad
+            upper_bound = median + multiplier * mad
 
-        thresholds = {"lower_bound": lower_bound, "upper_bound": upper_bound}
-        stat_values = {"median": median, "mad": mad, "z_max_threshold": multiplier}
-        return thresholds, stat_values
+            thresholds = {"lower_bound": lower_bound, "upper_bound": upper_bound}
+            stat_values = {"median": median, "mad": mad, "z_max_threshold": multiplier}
+            return thresholds, stat_values
+        except Exception as e:
+            print(f"Error in MADDetector fit: {e}")
+            return None, None
 
     def predict(self, data: pd.DataFrame) -> pd.Series:
         pass
