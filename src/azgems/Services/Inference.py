@@ -20,11 +20,11 @@ from typing import Dict, List, Optional, Literal
 from pydantic import BaseModel, Field
 
 ReasonKey = Literal[
-    "predicted_delay",
-    "shipping_time",
-    "vendor_on_time_rate",
-    "vendor_avg_past_delay",
-    "ship_weekday",
+    "Expected Shipment Day",
+    "Predicted Delay",
+    "Shipping Time",
+    "Vendor Delivery Performance",
+    "Vendor Average Past Delay",
 ]
 
 
@@ -32,9 +32,9 @@ class MessageItem(BaseModel):
     key: ReasonKey = Field(
         ...,
         description=(
-            "Constant key identifying the message type. "
-            "One of: 'predicted_delay', 'shipping_time', "
-            "'vendor_on_time_rate', 'vendor_avg_past_delay', 'ship_weekday'."
+            """Constant key identifying the message type. 
+            One of:  "Expected Shipment Day", "Predicted Delay", "Shipping Time", "Vendor Delivery Performance", "Vendor Average Past Delay",.
+            Also include the Key."""
         ),
     )
     text: str = Field(
@@ -469,23 +469,23 @@ class Inference:
         The output should have the following bullets or points in the output like 
         - Predicted delay
         - Shipping time
-        - Vendor on-time rate
+        - Vendor Delivery Performance
         - Vendor Average Past Delay Days
-        - Shipped day
+        - Expected Shipment Day
 
         if there is no data available then write "N/A" in the output.
         
         Example 1:
         Predicted delay: ~30 days
         Shipping time: 139 days (high uncertainty)
-        Vendor on-time rate: 5% (frequent delays)
+        Vendor Delivery Performance: 5% (frequent delays)
         Lead time: 233 days (error-prone)
-        Ship day: Friday (weekend hold risk)
+        Expected Shipment Day: Friday (weekend hold risk)
 
         Example 2:
         Predicted delay: ~5 days
-        Ship day: Monday → operational backlog
-        Vendor on-time rate: 33% (high risk)
+        Expected Shipment Day: Monday → operational backlog
+        Vendor Delivery Performance: 33% 
         Shipping time: 73 days → unexpected issues
         High tariffs/freight: Customs & logistics delays
         """
@@ -784,16 +784,37 @@ class Inference:
         def join_explanations(x) -> str:
             if x is None:
                 return "N/A"
+
             try:
+                # Actual keys from your data in desired order
+                priority_map = {
+                    "po start date": 1,
+                    "expected shipment date": 2,
+                    "expected shipment day": 3,
+                    "predicted delay": 4,
+                    "shipping time": 5,
+                    "vendor delivery performance": 6,
+                    "vendor average past delay": 7,
+                }
+
+                def detect_priority(s: str) -> int:
+                    s_low = s.lower()
+                    for key, rank in priority_map.items():
+                        if key in s_low:
+                            return rank
+                    return 999  # unmatched → bottom
+
+                # Sort the list
+                sorted_x = sorted(x, key=detect_priority)
+
+                # Format as HTML
                 html_parts = []
-                for s in x:
+                for s in sorted_x:
                     if not isinstance(s, str) or not s.strip():
                         continue
 
-                    # remove trailing comma
                     s = s.rstrip(",").strip()
 
-                    # split title and description
                     if ":" in s:
                         title, desc = s.split(":", 1)
                         title = f"<b>{title.strip()}:</b>"
@@ -803,6 +824,7 @@ class Inference:
                         html_parts.append(s)
 
                 return "<br>".join(html_parts) if html_parts else "N/A"
+
             except Exception:
                 return "N/A"
 
@@ -841,6 +863,9 @@ class Inference:
             vendor_id = pick(
                 row, ["vendor_id", "vendorid", "vendor_code"], default=None
             )
+            item_number = pick(row, ["item_number"])
+            start_date = pick(row, ["po_date_dt"])
+            shipped_date = pick(row, ["shipped_dt"])
             customer_po = pick(
                 row, ["customer_po", "po", "po_number", "po_no"], default=None
             )
@@ -852,6 +877,24 @@ class Inference:
             pred_days = float(preds[i])
 
             # Prefer LLM explanation; fallback to numeric context
+            # llm_expls[i].extend(
+            #     [
+            #         f"Expected PO Start Date: {start_date.date().isoformat()},",
+            #         f"Expected Shipment Date: {shipped_date.date().isoformat()},",
+            #     ]
+            # )
+            llm_expls[i].insert(
+                0,
+                f"PO Start Date: {start_date.date().isoformat()},",
+            )
+            llm_expls[i].insert(
+                1,
+                f"Expected Shipment Date: {shipped_date.date().isoformat()},",
+            )
+            llm_expls[i].insert(
+                -1,
+                f"Item Number: {item_number},",
+            )
             msg = join_explanations(llm_expls[i])
             if msg == "N/A":
                 msg = f"Predicted delay ≈ {pred_days:.2f} days (threshold {threshold})."
@@ -859,7 +902,7 @@ class Inference:
             payload.append(
                 {
                     "batch_in_id": batch_in_id,
-                    "title": f"Shipment may be delayed for batch number: {str(customer_po)}",
+                    "title": f"Shipment may be delayed for {str(customer_po)} Customer PO",
                     "prediction": "delayed",
                     "message": msg,
                     "customer_name": self.customer_name or "",
@@ -870,6 +913,17 @@ class Inference:
                     "sku": sku if sku is not None else None,
                     "po_comitted": (
                         str(po_committed) if po_committed is not None else None
+                    ),
+                    "item_number": item_number,
+                    "po_start_date": (
+                        start_date.date().isoformat()
+                        if start_date is not None
+                        else None
+                    ),
+                    "expected_shipped_date": (
+                        shipped_date.date().isoformat()
+                        if shipped_date is not None
+                        else None
                     ),
                     "probability": soft_probability(pred_days, threshold),
                 }

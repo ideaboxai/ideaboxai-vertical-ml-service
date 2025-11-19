@@ -157,7 +157,8 @@ class DatasetPreparation:
                 "SHIPMENT_ROW_FEATURES.tariff_type",
                 "SHIPMENT_ROW_FEATURES.total_bcy",
                 "SHIPMENT_ROW_FEATURES.vendor_id",
-                "SHIPMENT_ROW_FEATURES.vendor_name"
+                "SHIPMENT_ROW_FEATURES.vendor_name",
+                "SHIPMENT_ROW_FEATURES.item_number"
             ],
             "timeDimensions": [],
             "filters": [
@@ -459,7 +460,7 @@ class DatasetPreparation:
             dataset = dataset.replace({"tariff_type": {"": "Not Applicable"}})
             dataset = dataset.drop_duplicates()
 
-            date_time_columns = ["shipped_dt", "eta_dt", "receipt_dt"]
+            date_time_columns = ["shipped_dt", "eta_dt", "receipt_dt", "po_date_dt"]
             dataset[date_time_columns] = dataset[date_time_columns].apply(
                 pd.to_datetime, errors="coerce"
             )
@@ -517,20 +518,24 @@ class DatasetPreparation:
 
             dataset = dataset.dropna() if method == "training" else dataset
 
-            dataset = dataset.drop(
-                columns=[
-                    "coo",
-                    "item_product_category",
-                    "bill_id",
-                    # "vendor_id","batch_in_id","batch_number","purchase_order" # will drop at the time of training
-                    "bni_created_time",
-                    "po_date_dt",
-                    "receipt_dt",
-                    "vendor_name",
-                ]
-                + date_time_columns
+            # Base columns to drop always
+            base_columns = [
+                "coo",
+                "item_product_category",
+                "bill_id",
+                "bni_created_time",
+                # "po_date_dt",
+                "receipt_dt",
+                "vendor_name",
+            ]
+
+            # Add date columns only during training
+            drop_cols = base_columns + (
+                date_time_columns if method == "training" else []
             )
-            dataset.to_csv("dataset_verification.csv", index=False)
+
+            dataset = dataset.drop(columns=drop_cols)
+            # dataset.to_csv("dataset_verification.csv", index=False)
             return dataset
         except Exception as e:
             print(f"Error getting and cleaning necessary dataset: {e}")
