@@ -20,11 +20,11 @@ from typing import Dict, List, Optional, Literal
 from pydantic import BaseModel, Field
 
 ReasonKey = Literal[
-    "Expected Shipment Day",
-    "Predicted Delay",
-    "Shipping Time",
-    "Vendor Delivery Performance",
-    "Vendor Average Past Delay",
+    "Expected_Shipment_Day",
+    "Predicted_Delay",
+    "Shipping_Time",
+    "Vendor_Delivery_Performance",
+    "Vendor_Average_Past_Delay",
 ]
 
 
@@ -33,8 +33,7 @@ class MessageItem(BaseModel):
         ...,
         description=(
             """Constant key identifying the message type. 
-            One of:  "Expected Shipment Day", "Predicted Delay", "Shipping Time", "Vendor Delivery Performance", "Vendor Average Past Delay",.
-            Also include the Key."""
+            One of:  "Expected_Shipment_Day", "Predicted_Delay", "Shipping_Time", "Vendor_Delivery_Performance", "Vendor_Average_Past_Delay",."""
         ),
     )
     text: str = Field(
