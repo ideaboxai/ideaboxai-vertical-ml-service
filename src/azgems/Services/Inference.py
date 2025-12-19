@@ -7,6 +7,7 @@ import shap
 import json
 import asyncio
 from pydantic import BaseModel, Field
+from datetime import date, timedelta
 
 from src.azgems.Services.OpenAIclient import OpenAIClient
 
@@ -694,6 +695,24 @@ class Inference:
 
         return result
 
+    def first_saturday_of_feb(self, year):
+        feb_1 = date(year, 2, 1)
+        return feb_1 + timedelta(days=(5 - feb_1.weekday()) % 7)
+
+    def get_walmart_week(self):
+        today = date.today()
+
+        fy_start_current = self.first_saturday_of_feb(today.year)
+        if today >= fy_start_current:
+            fy = today.year
+            fy_start = fy_start_current
+        else:
+            fy = today.year - 1
+            fy_start = self.first_saturday_of_feb(fy)
+
+        week_num = ((today - fy_start).days // 7) + 1
+        return f"{fy}{week_num:02d}"
+
     async def run_batch_and_format_json(
         self,
         dataset: Optional[pd.DataFrame] = None,
@@ -925,6 +944,7 @@ class Inference:
                         else None
                     ),
                     "probability": soft_probability(pred_days, threshold),
+                    "fcst_wm_yr_wk_nbr": self.get_walmart_week(),
                 }
             )
 
